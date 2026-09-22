@@ -5,8 +5,9 @@ import type { Media } from "@/lib/mock-data";
 import { InstagramGlyph } from "@/components/ui/InstagramGlyph";
 
 /**
- * A photo or (mock) video. Videos are a slow pan over a still with a duration
- * badge, so they read as moving footage without shipping video files.
+ * A photo or video. Videos play muted and looped like Stories when `playing`;
+ * otherwise their poster frame shows. A video without a file falls back to a
+ * slow pan over the still.
  */
 export function MediaTile({
   media,
@@ -24,14 +25,27 @@ export function MediaTile({
   const video = media.kind === "video";
   return (
     <div className={`relative overflow-hidden bg-neutral-800 ${className}`}>
-      <motion.img
-        src={media.src}
-        alt={media.caption ?? ""}
-        draggable={false}
-        className="absolute inset-0 h-full w-full object-cover"
-        animate={video && playing ? { scale: [1.04, 1.16], x: ["-2%", "3%"] } : { scale: 1, x: 0 }}
-        transition={video && playing ? { duration: 7, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { duration: 0.3 }}
-      />
+      {video && media.video && playing ? (
+        <video
+          src={media.video}
+          poster={media.src}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <motion.img
+          src={media.src}
+          alt={media.caption ?? ""}
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-cover"
+          animate={video && !media.video && playing ? { scale: [1.04, 1.16], x: ["-2%", "3%"] } : { scale: 1, x: 0 }}
+          transition={video && !media.video && playing ? { duration: 7, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { duration: 0.3 }}
+        />
+      )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15" />
 
       {video && (
@@ -74,7 +88,7 @@ export function PhotosAppGlyph({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24">
       {PETALS.map((color, i) => (
-        <ellipse key={i} cx="12" cy="6.5" rx="3" ry="5.2" fill={color} opacity="0.9" transform={`rotate(${i * 45} 12 12)`} style={{ mixBlendMode: "multiply" }} />
+        <ellipse key={i} cx="12" cy="6.5" rx="3" ry="5.2" fill={color} opacity="0.85" transform={`rotate(${i * 45} 12 12)`} />
       ))}
     </svg>
   );

@@ -6,20 +6,12 @@ import { PRESELECTED_STORIES, TOP_STORIES, type Muse } from "@/lib/mock-data";
 import type { Summary } from "@/lib/muse-script";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 import { ProfilePreview } from "./ProfilePreview";
-import { StoriesPick, type Moment } from "./StoriesPick";
+import { StoriesPick, toMoment, type Moment } from "./StoriesPick";
 import { StoryScan } from "./StoryScan";
 
 type Phase = "scan" | "pick" | "preview";
 
-const initialMoments = (): Moment[] =>
-  TOP_STORIES.map((s, i) => ({
-    media: s,
-    likes: s.likes,
-    postedAt: s.postedAt,
-    suggested: s.caption,
-    title: s.caption,
-    selected: i < PRESELECTED_STORIES,
-  }));
+const initialMoments = (): Moment[] => TOP_STORIES.map((s, i) => toMoment(s, i < PRESELECTED_STORIES));
 
 /** After Muse: bring back the user's most-loved expired Instagram Stories as profile moments. */
 export function StoriesFlow({

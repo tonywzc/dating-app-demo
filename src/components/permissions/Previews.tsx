@@ -1,88 +1,154 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import type { ReactNode } from "react";
+import { motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
-import { CAMERA_ROLL } from "@/lib/mock-data";
+import { DEFAULT_MUSE, PROFILE_PHOTO, TOP_STORIES } from "@/lib/mock-data";
 import { AppIcon } from "@/components/brand/AppIcon";
+import { MuseAvatar } from "@/components/muse/MuseAvatar";
 
-/** Advances an index every `ms` milliseconds. */
-function useTicker(length: number, ms: number) {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((n) => (n + 1) % length), ms);
-    return () => clearInterval(t);
-  }, [length, ms]);
-  return i;
-}
+// Full-screen example scenes, one per permission. Each shows only that
+// permission's use cases, so the examples read as "this is what it's for".
 
-const NOTIFICATIONS = [
-  { title: "It's a match", body: "You and Maya both said yes. Say hi before the day's over." },
-  { title: "Alex sent you a voice note", body: "“Okay, that hiking spot sounds amazing…”" },
-  { title: "Rooftop mixer tonight", body: "Starts at 7 PM in Hayes Valley. 12 people you'd like are going." },
-];
+const enter = (delay: number) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, delay, ease: [0.2, 0.8, 0.2, 1] as const },
+});
 
-export function NotificationPreview() {
-  const i = useTicker(NOTIFICATIONS.length, 2600);
-  const n = NOTIFICATIONS[i];
+/** Lock screen with the three kinds of notifications: a match, a message, an event. */
+export function NotificationsHero() {
+  const banners = [
+    { title: "It's a match", body: "You and Maya both said yes. Say hi?" },
+    { title: "Alex sent a message", body: "“Okay, that hiking spot sounds amazing…”" },
+    { title: "Rooftop mixer tonight", body: "7 PM in Hayes Valley. 12 people you'd like are going." },
+  ];
   return (
-    <div className="relative h-[92px]">
-      {/* Banner peeking out behind */}
-      <div className="absolute inset-x-4 top-[14px] h-[70px] rounded-[20px] bg-white/[0.06]" />
-      <AnimatePresence mode="popLayout" initial={false}>
-        <motion.div
-          key={i}
-          className="absolute inset-x-0 top-0 flex gap-3 rounded-[22px] border border-white/10 bg-[#2B2A31]/95 p-3 backdrop-blur-xl"
-          initial={{ y: -24, opacity: 0, scale: 0.96 }}
-          animate={{ y: 0, opacity: 1, scale: 1 }}
-          exit={{ y: 14, opacity: 0, scale: 0.94 }}
-          transition={{ type: "spring", stiffness: 380, damping: 30 }}
-        >
-          <AppIcon size={38} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-baseline justify-between">
-              <span className="text-[14px] font-semibold">{n.title}</span>
-              <span className="text-[12px] text-white/45">now</span>
+    <div className="flex w-full flex-col items-center">
+      <motion.div className="text-center" {...enter(0)}>
+        <div className="text-[15px] font-medium text-white/60">Monday, September 22</div>
+        <div className="text-[76px] font-bold leading-[80px] tracking-[-0.03em] text-white/90">9:41</div>
+      </motion.div>
+      <div className="mt-8 w-full space-y-[10px]">
+        {banners.map((b, i) => (
+          <motion.div key={b.title} className="flex gap-3 rounded-[22px] border border-white/10 bg-white/[0.1] p-3 backdrop-blur-2xl" {...enter(0.25 + i * 0.18)}>
+            <AppIcon size={38} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-baseline justify-between">
+                <span className="text-[14px] font-semibold">{b.title}</span>
+                <span className="text-[12px] text-white/45">{i === 0 ? "now" : `${i * 12}m ago`}</span>
+              </div>
+              <p className="mt-[1px] truncate text-[13px] text-white/70">{b.body}</p>
             </div>
-            <p className="mt-[1px] line-clamp-2 text-[13px] leading-[17px] text-white/70">{n.body}</p>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
 
-const PHRASES = [
-  "I'm happiest outdoors, usually on a trail by 8 AM…",
-  "Looking for someone curious, kind, and a little competitive…",
-  "Big on family. Bigger on Sunday dim sum…",
-];
-
-export function VoicePreview() {
-  const i = useTicker(PHRASES.length, 3200);
+/** Muse listening, with the two things people talk about: themselves and their type. */
+export function VoiceHero() {
   return (
-    <div className="flex items-center gap-3 rounded-[22px] border border-white/10 bg-white/[0.05] p-3">
-      <div
-        className="flex h-[40px] w-[40px] shrink-0 items-center justify-center rounded-full"
-        style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
-      >
-        <MicGlyph size={18} />
+    <div className="flex w-full flex-col items-center">
+      <motion.div {...enter(0)}>
+        <MuseAvatar muse={DEFAULT_MUSE} size={120} mood="listening" />
+      </motion.div>
+      <motion.div className="mt-7" {...enter(0.15)}>
+        <Waveform bars={30} height={30} />
+      </motion.div>
+      <div className="mt-8 w-full space-y-3">
+        <Bubble label="About you" delay={0.35}>
+          &ldquo;I&apos;m happiest on a trail by 8 AM, then cooking for friends.&rdquo;
+        </Bubble>
+        <Bubble label="Your type" delay={0.55}>
+          &ldquo;Someone curious and kind, who&apos;s close to their family.&rdquo;
+        </Bubble>
       </div>
-      <div className="min-w-0 flex-1">
-        <Waveform bars={26} height={22} />
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.p
-            key={i}
-            className="mt-1 truncate text-[13px] text-white/70"
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.3 }}
+    </div>
+  );
+}
+
+function Bubble({ label, delay, children }: { label: string; delay: number; children: ReactNode }) {
+  return (
+    <motion.div className="rounded-[20px] border border-white/10 bg-white/[0.07] px-4 py-3" {...enter(delay)}>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#FF8AA2]">{label}</div>
+      <p className="mt-1 text-[15px] leading-[21px] text-white/85">{children}</p>
+    </motion.div>
+  );
+}
+
+/** Two uses side by side: adding moments, and a selfie to verify it's really you. */
+export function PhotosHero() {
+  const fan = TOP_STORIES.slice(0, 3);
+  return (
+    <div className="grid w-full grid-cols-2 gap-4">
+      <motion.div className="flex flex-col items-center" {...enter(0)}>
+        <div className="relative h-[220px] w-full">
+          {fan.map((s, i) => (
+            <motion.div
+              key={s.id}
+              className="absolute top-3 h-[180px] w-[110px] overflow-hidden rounded-[16px] border-2 border-[#0B0A10] shadow-xl"
+              style={{ left: `calc(50% - 55px + ${(i - 1) * 26}px)`, zIndex: i === 1 ? 2 : 1 }}
+              initial={{ rotate: 0, opacity: 0 }}
+              animate={{ rotate: (i - 1) * 10, opacity: 1, y: i === 1 ? -6 : 6 }}
+              transition={{ type: "spring", stiffness: 220, damping: 20, delay: 0.15 + i * 0.08 }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={s.src} alt="" className="h-full w-full object-cover" />
+            </motion.div>
+          ))}
+        </div>
+        <div className="mt-2 text-center text-[15px] font-semibold">Add your moments</div>
+      </motion.div>
+
+      <motion.div className="flex flex-col items-center" {...enter(0.2)}>
+        <div className="relative mt-3 h-[196px] w-[140px] overflow-hidden rounded-[22px]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={PROFILE_PHOTO} alt="" className="h-full w-full object-cover" />
+          <Viewfinder />
+          <motion.span
+            className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1 rounded-full bg-[#0A84FF] px-3 py-1 text-[12px] font-semibold"
+            initial={{ scale: 0 }}
+            animate={{ scale: [0, 1.15, 1] }}
+            transition={{ delay: 0.9, duration: 0.4 }}
           >
-            {PHRASES[i]}
-          </motion.p>
-        </AnimatePresence>
-      </div>
+            <svg width="10" height="8" viewBox="0 0 12 10" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1.5 5.2l3 3 6-6.4" />
+            </svg>
+            Verified
+          </motion.span>
+        </div>
+        <div className="mt-[26px] text-center text-[15px] font-semibold">Verify it&apos;s you</div>
+      </motion.div>
+    </div>
+  );
+}
+
+function Viewfinder() {
+  const corner = "absolute h-[18px] w-[18px] border-white";
+  return (
+    <motion.div className="absolute inset-[10px]" animate={{ scale: [1, 0.95, 1] }} transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}>
+      <span className={`${corner} left-0 top-0 rounded-tl-[8px] border-l-[3px] border-t-[3px]`} />
+      <span className={`${corner} right-0 top-0 rounded-tr-[8px] border-r-[3px] border-t-[3px]`} />
+      <span className={`${corner} bottom-0 left-0 rounded-bl-[8px] border-b-[3px] border-l-[3px]`} />
+      <span className={`${corner} bottom-0 right-0 rounded-br-[8px] border-b-[3px] border-r-[3px]`} />
+    </motion.div>
+  );
+}
+
+/** The side of the phone: hold the Action Button, Muse starts listening. */
+export function ShortcutHero() {
+  return (
+    <div className="flex w-full flex-col items-center">
+      <motion.div {...enter(0)}>
+        <ActionButtonArt size={2.4} />
+      </motion.div>
+      <motion.div className="mt-10 flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.08] py-2 pl-2 pr-5" {...enter(0.25)}>
+        <MuseAvatar muse={DEFAULT_MUSE} size={32} mood="listening" />
+        <Waveform bars={14} height={18} />
+        <span className="text-[14px] font-medium text-white/80">Listening&hellip;</span>
+      </motion.div>
     </div>
   );
 }
@@ -103,76 +169,6 @@ export function Waveform({ bars, height, active = true }: { bars: number; height
           />
         );
       })}
-    </div>
-  );
-}
-
-export function PhotosPreview() {
-  return (
-    <div className="flex h-[96px] items-center justify-center gap-4">
-      <div className="relative h-[92px] w-[150px]">
-        {CAMERA_ROLL.map((src, i) => (
-          <motion.div
-            key={src}
-            className="absolute top-1 h-[84px] w-[66px] overflow-hidden rounded-[12px] border-2 border-[#1c1b22] shadow-lg"
-            style={{ left: 8 + i * 38, zIndex: i === 1 ? 2 : 1 }}
-            initial={{ rotate: 0, y: 6, opacity: 0 }}
-            animate={{ rotate: (i - 1) * 9, y: i === 1 ? -2 : 4, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 + i * 0.08 }}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="" className="h-full w-full object-cover" />
-          </motion.div>
-        ))}
-      </div>
-      <div className="relative flex h-[84px] w-[70px] items-center justify-center rounded-[14px] bg-white/[0.06]">
-        <Viewfinder />
-        <svg width="30" height="34" viewBox="0 0 30 34" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round">
-          <circle cx="15" cy="11" r="7" />
-          <path d="M2 33c1.5-7 6.5-11 13-11s11.5 4 13 11" />
-        </svg>
-        <motion.span
-          className="absolute -bottom-2 -right-2 flex h-[24px] w-[24px] items-center justify-center rounded-full border-2 border-[#1c1b22] bg-[#0A84FF]"
-          initial={{ scale: 0 }}
-          animate={{ scale: [0, 1.2, 1] }}
-          transition={{ delay: 0.6, duration: 0.4 }}
-        >
-          <svg width="11" height="9" viewBox="0 0 12 10" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M1.5 5.2l3 3 6-6.4" />
-          </svg>
-        </motion.span>
-      </div>
-    </div>
-  );
-}
-
-function Viewfinder() {
-  const corner = "absolute h-[12px] w-[12px] border-white/80";
-  return (
-    <motion.div
-      className="absolute inset-[6px]"
-      animate={{ scale: [1, 0.94, 1] }}
-      transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-    >
-      <span className={`${corner} left-0 top-0 rounded-tl-[6px] border-l-2 border-t-2`} />
-      <span className={`${corner} right-0 top-0 rounded-tr-[6px] border-r-2 border-t-2`} />
-      <span className={`${corner} bottom-0 left-0 rounded-bl-[6px] border-b-2 border-l-2`} />
-      <span className={`${corner} bottom-0 right-0 rounded-br-[6px] border-b-2 border-r-2`} />
-    </motion.div>
-  );
-}
-
-/** Side view of the phone with the Action Button being pressed. */
-export function ShortcutPreview() {
-  return (
-    <div className="flex items-center gap-4 rounded-[22px] border border-white/10 bg-white/[0.05] p-3">
-      <ActionButtonArt />
-      <div className="min-w-0 flex-1">
-        <div className="text-[14px] font-semibold">Hold, talk, let go</div>
-        <p className="mt-[2px] text-[13px] leading-[17px] text-white/60">
-          Your agent listens while you hold, even with {BRAND.name} closed.
-        </p>
-      </div>
     </div>
   );
 }

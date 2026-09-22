@@ -13,7 +13,7 @@ import { LegalSheet, type LegalDoc } from "@/components/onboarding/LegalSheet";
 import { InstagramChooser } from "@/components/onboarding/InstagramChooser";
 import { SettingUp } from "@/components/onboarding/SettingUp";
 import { AllSet } from "@/components/onboarding/AllSet";
-import { Welcome } from "@/components/onboarding/Welcome";
+import { DemoEnd } from "@/components/onboarding/DemoEnd";
 import { PermissionsFlow } from "@/components/permissions/PermissionsFlow";
 import { AboutYou } from "@/components/profile/AboutYou";
 import { MuseFlow } from "@/components/muse/MuseFlow";
@@ -21,12 +21,12 @@ import { StoriesFlow } from "@/components/photos/StoriesFlow";
 import { SAMPLE_ANSWERS, summarize, type Summary } from "@/lib/muse-script";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 
-type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "stories" | "welcome";
+type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "stories" | "end";
 type SheetName = "switch" | "connect" | LegalDoc;
 
 const noop = () => () => {};
 
-const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "stories", "welcome"];
+const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "stories", "end"];
 
 const prefill = (id: string) => [...PROFILE_PREFILL.basics, ...PROFILE_PREFILL.life].find((f) => f.id === id)?.value ?? "";
 
@@ -111,12 +111,6 @@ function Onboarding() {
     setRun((r) => r + 1);
   };
 
-  const signOut = () => {
-    setSheet(null);
-    setProfile(null);
-    setScreen("accounts");
-  };
-
   return (
     <PhoneFrame tone={igLogin ? "dark" : "light"}>
       <AnimatePresence>
@@ -160,10 +154,10 @@ function Onboarding() {
             muse={account.muse ?? DEFAULT_MUSE}
             profile={profile ?? DEFAULT_PROFILE}
             summary={summary ?? DEFAULT_SUMMARY}
-            onDone={() => setScreen("welcome")}
+            onDone={() => setScreen("end")}
           />
         )}
-        {screen === "welcome" && <Welcome key="welcome" account={account} name={name} onReplay={replay} onSignOut={signOut} />}
+        {screen === "end" && <DemoEnd key="end" onReplay={replay} />}
       </AnimatePresence>
 
       <SwitchAccountSheet

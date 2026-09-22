@@ -9,7 +9,7 @@ npm run dev -- -p 3100
 - Desktop: open http://localhost:3100. The phone frame scales to fit the window.
 - Real iPhone: open the same URL on your phone (same network, use your Mac's IP). The frame drops away and the app fills the screen; "Add to Home Screen" makes it look like an installed app.
 - `?speed=0.25` plays the launch animation in slow motion.
-- `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `stories`, `welcome`.
+- `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `stories`, `end`.
 - On desktop, the frame's Action Button (upper left side of the phone) is pressable: hold it during the voice-shortcut "Try it" step.
 
 ## What's in it
@@ -22,20 +22,20 @@ npm run dev -- -p 3100
 | Instagram account chooser (mock) | Pick a demo account; it joins the switcher. No sign-in fields, since the demo is shared publicly. |
 | Consent sheet | What the app receives from Instagram; Continue / Not now |
 | Setting up | Short progress checklist |
-| Permissions checklist | Notifications → Voice (mic) → Photos & camera → Voice shortcut (optional). Each opens an iOS system prompt; denying lets you retry. |
+| Permissions | A checklist hub; each permission opens its own full-screen step showing only its use cases, then the iOS system prompt. Skip (top right) asks to confirm. |
 | Voice shortcut sheet | Action Button / Back Tap / Hold the heart → Try it (hold to talk) → ready. Or skip. |
 | All set | Welcome moment, then Meta-sourced details fill an "About you" card that expands into the next screen. Tap to skip. |
 | About you | Prefilled from Instagram / Facebook (mock), every field editable, interests add/remove, gender required |
 | Talk with Muse | Tap the mic (no holding) and talk; Muse replies when you pause. Quick questions swap the mic for choices; open ones give it back. Stop any time → "That's me, for now". Your speech is simulated from a script. |
 | Muse's summary | Structured card of who you are and who you're hoping to meet, plus the share of nearby members you'd be a great fit for. "Tell Muse more" goes back to the conversation. |
-| Your stories | Muse scans the Instagram Story archive and brings back the most-loved expired Stories, each with a title Muse wrote (editable in place). Toggle which to add, add more from the camera roll, or skip. |
+| Your best moments | Muse scans the Instagram Story archive and brings back the most-loved expired Stories (real video included), each with a title Muse wrote, editable in place. Add more from the camera roll or the archive, or skip. |
 | Profile preview | "Here's how people will see you": main photo, Muse's take, stories with their titles. |
-| End | Replay onboarding, or sign out back to the account picker |
+| End | A thank-you and "Replay onboarding". What comes after onboarding is still undecided. |
 
 ## Where things live
 
 - `src/lib/brand.ts`: name, colors and the mark geometry (shared by the SVG and the launch animation)
-- `src/lib/mock-data.ts`: mock account and memory photos (Unsplash)
+- `src/lib/mock-data.ts`: mock account, launch photos (Unsplash), and story media (Pexels photos and videos; Tony is one consistent model throughout)
 - `src/components/DemoApp.tsx`: screen/sheet state machine
 - `src/components/onboarding/`: launch, account, setup and welcome screens
 - `src/components/permissions/`: permission checklist, previews and the voice-shortcut sheet

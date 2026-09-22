@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { OTHER_STORIES, TOP_STORIES, type Media, type Muse } from "@/lib/mock-data";
+import { ARCHIVE_STORIES, TOP_STORIES, type Media, type Muse } from "@/lib/mock-data";
 import { InstagramGlyph } from "@/components/ui/InstagramGlyph";
 import { IntimateBackdrop } from "@/components/muse/IntimateBackdrop";
 import { MuseAvatar } from "@/components/muse/MuseAvatar";
@@ -22,7 +22,7 @@ const SCAN_MS = START_MS + TOP_STORIES.length * PICK_MS;
 
 const WALL: { media: Media; rank: number }[] = Array.from({ length: COLS * ROWS }, (_, i) => {
   const rank = PICK_SLOTS.indexOf(i);
-  return rank >= 0 ? { media: TOP_STORIES[rank], rank } : { media: OTHER_STORIES[i % OTHER_STORIES.length], rank: -1 };
+  return rank >= 0 ? { media: TOP_STORIES[rank], rank } : { media: ARCHIVE_STORIES[i % ARCHIVE_STORIES.length], rank: -1 };
 });
 
 /** Muse goes through the Instagram Story archive and finds the stories friends loved most. */

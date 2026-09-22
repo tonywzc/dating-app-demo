@@ -171,7 +171,7 @@ export function MuseResult({
         className="pb-safe absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0A0810] via-[#0A0810]/95 to-transparent px-5 pt-10"
         {...rise(1.3)}
       >
-        <Button onClick={onContinue}>Next: bring your stories</Button>
+        <Button onClick={onContinue}>Next: your best moments</Button>
         <div className="mt-1 flex justify-center">
           <TextButton onClick={onTellMore} className="text-white/70">
             Tell {muse.name} more

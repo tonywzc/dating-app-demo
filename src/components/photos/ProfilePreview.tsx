@@ -97,10 +97,10 @@ export function ProfilePreview({
         className="pb-safe absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0E0C14] via-[#0E0C14]/95 to-transparent px-5 pt-10"
         {...rise(0.5)}
       >
-        <Button onClick={onContinue}>Meet my first introductions</Button>
+        <Button onClick={onContinue}>Looks good</Button>
         <div className="mt-1 flex justify-center">
           <TextButton onClick={onEdit} className="text-white/70">
-            Edit my stories
+            Edit my moments
           </TextButton>
         </div>
       </motion.div>

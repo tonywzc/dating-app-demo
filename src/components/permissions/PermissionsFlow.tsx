@@ -5,8 +5,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import { CAMERA_ROLL } from "@/lib/mock-data";
 import { SystemAlert, type AlertSpec } from "@/components/ios/SystemAlert";
+import { Button, TextButton } from "@/components/ui/Button";
 import { Aurora } from "@/components/onboarding/AccountPicker";
-import { NotificationPreview, PhotosPreview, ShortcutPreview, VoicePreview } from "./Previews";
+import { NotificationsHero, PhotosHero, ShortcutHero, VoiceHero } from "./Previews";
 import { SHORTCUT_LABEL, ShortcutSheet, type ShortcutChoice } from "./ShortcutSheet";
 
 type PermissionId = "notifications" | "voice" | "photos" | "shortcut";
@@ -14,46 +15,53 @@ type Status = "pending" | "granted" | "limited" | "denied" | "skipped";
 
 type Item = {
   id: PermissionId;
-  title: string;
-  description: string;
+  /** Name in the checklist. */
+  name: string;
+  /** Focused screen: headline, one sentence, button. */
+  headline: string;
+  line: string;
   cta: string;
   icon: ReactNode;
-  preview: ReactNode;
+  hero: ReactNode;
   optional?: boolean;
 };
 
 const ITEMS: Item[] = [
   {
     id: "notifications",
-    title: "Notifications",
-    description: "Know the moment you match, when someone messages you, and before events you've joined.",
+    name: "Notifications",
+    headline: "Turn on notifications",
+    line: "Know the moment you match, get a message, or an event is coming up.",
     cta: "Allow notifications",
     icon: <BellIcon />,
-    preview: <NotificationPreview />,
+    hero: <NotificationsHero />,
   },
   {
     id: "voice",
-    title: "Voice",
-    description: "Talk to your agent about who you are and the kind of person you're hoping to meet.",
+    name: "Voice",
+    headline: "Talk to Muse",
+    line: "Tell your agent about you, and who you're hoping to meet.",
     cta: "Allow microphone",
     icon: <MicIcon />,
-    preview: <VoicePreview />,
+    hero: <VoiceHero />,
   },
   {
     id: "photos",
-    title: "Photos & camera",
-    description: "Add real moments to your profile, and take a quick selfie to show it's really you.",
+    name: "Photos & camera",
+    headline: "Photos & camera",
+    line: "Add real moments, and take a quick selfie to show it's really you.",
     cta: "Allow photos & camera",
     icon: <CameraIcon />,
-    preview: <PhotosPreview />,
+    hero: <PhotosHero />,
   },
   {
     id: "shortcut",
-    title: "Voice shortcut",
-    description: "Start talking to your agent from anywhere with one press, even when the app is closed.",
+    name: "Voice shortcut",
+    headline: "Talk from anywhere",
+    line: "Hold the Action Button to talk to Muse, even when the app is closed.",
     cta: "Set up shortcut",
     icon: <BoltIcon />,
-    preview: <ShortcutPreview />,
+    hero: <ShortcutHero />,
     optional: true,
   },
 ];
@@ -62,6 +70,10 @@ const APP = `“${BRAND.name}”`;
 
 const resolved = (s: Status) => s !== "pending" && s !== "denied";
 
+/**
+ * Permission setup. The checklist is the hub; each permission opens a focused,
+ * full-screen step with only that permission's examples, then checks off.
+ */
 export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const [status, setStatus] = useState<Record<PermissionId, Status>>({
     notifications: "pending",
@@ -69,6 +81,8 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
     photos: "pending",
     shortcut: "pending",
   });
+  const [focus, setFocus] = useState<PermissionId | null>(null);
+  const [justAllowed, setJustAllowed] = useState(false);
   const [shortcut, setShortcut] = useState<ShortcutChoice | null>(null);
   const [alert, setAlert] = useState<AlertSpec | null>(null);
   const [shortcutOpen, setShortcutOpen] = useState(false);
@@ -76,21 +90,30 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
 
   const done = ITEMS.filter((i) => resolved(status[i.id])).length;
   const allDone = done === ITEMS.length;
-  const active = ITEMS.find((i) => !resolved(status[i.id]))?.id;
+  const next = ITEMS.find((i) => !resolved(status[i.id]))?.id;
 
   useEffect(() => {
-    if (!allDone) return;
+    if (!allDone || focus) return;
     const t = setTimeout(onComplete, 900);
     return () => clearTimeout(t);
-  }, [allDone, onComplete]);
+  }, [allDone, focus, onComplete]);
 
-  const set = (id: PermissionId, s: Status) => setStatus((prev) => ({ ...prev, [id]: s }));
-  const answer = (id: PermissionId, s: Status) => () => {
+  // Settle a permission: celebrate briefly on the focused screen, then return to the list.
+  const settle = (id: PermissionId, s: Status) => {
     setAlert(null);
-    set(id, s);
+    setStatus((prev) => ({ ...prev, [id]: s }));
+    if (s === "granted" || s === "limited") {
+      setJustAllowed(true);
+      setTimeout(() => {
+        setJustAllowed(false);
+        setFocus(null);
+      }, 900);
+    } else {
+      setFocus(null);
+    }
   };
+  const answer = (id: PermissionId, s: Status) => () => settle(id, s);
 
-  // Skipping is allowed, but we ask once more: these permissions carry the core experience.
   const confirmSkip = () =>
     setAlert({
       title: "Are you sure?",
@@ -118,7 +141,6 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
     });
 
   const request = (id: PermissionId) => {
-    if (resolved(status[id])) return;
     switch (id) {
       case "notifications":
         return setAlert({
@@ -163,75 +185,92 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
       case "limited":
         return "On · Selected photos";
       case "skipped":
-        return "Skipped · Set up later in Settings";
+        return "Skipped";
       case "denied":
         return "Not allowed · Tap to try again";
       default:
-        return null;
+        return id === next ? "Up next" : null;
     }
   };
 
+  const focused = ITEMS.find((i) => i.id === focus);
+
   return (
     <motion.div
-      className="pt-safe pb-safe absolute inset-0 flex flex-col bg-ink"
+      className="absolute inset-0 bg-ink"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.35 } }}
     >
-      <Aurora />
+      {/* Checklist hub */}
+      <div className="pt-safe pb-safe absolute inset-0 flex flex-col">
+        <Aurora />
 
-      {!allDone && (
-        <button
-          type="button"
-          onClick={confirmSkip}
-          className="absolute right-4 top-[calc(var(--safe-top)+6px)] z-10 h-[36px] rounded-full bg-white/10 px-4 text-[15px] font-semibold text-white/80 backdrop-blur-xl active:opacity-60"
-        >
-          Skip
-        </button>
-      )}
+        {!allDone && (
+          <button
+            type="button"
+            onClick={confirmSkip}
+            className="absolute right-4 top-[calc(var(--safe-top)+6px)] z-10 h-[36px] rounded-full bg-white/10 px-4 text-[15px] font-semibold text-white/80 backdrop-blur-xl active:opacity-60"
+          >
+            Skip
+          </button>
+        )}
 
-      <div className="relative px-6 pt-5">
-        <h1 className="text-[32px] font-bold leading-[38px] tracking-[-0.03em]">
-          Let&apos;s set up
-          <br />
-          {BRAND.name}
-        </h1>
-        <p className="mt-2 text-[15px] leading-[21px] text-white/60">
-          Tap each one to turn it on. You can change these anytime in Settings.
-        </p>
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex flex-1 gap-[6px]">
-            {ITEMS.map((i) => (
-              <div key={i.id} className="h-[4px] flex-1 overflow-hidden rounded-full bg-white/10">
-                <motion.div
-                  className="h-full rounded-full"
-                  style={{ background: `linear-gradient(90deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
-                  initial={false}
-                  animate={{ width: resolved(status[i.id]) ? "100%" : "0%" }}
-                  transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
-                />
-              </div>
-            ))}
+        <div className="relative px-6 pt-14">
+          <h1 className="text-[34px] font-bold leading-[40px] tracking-[-0.03em]">
+            Let&apos;s set up
+            <br />
+            {BRAND.name}
+          </h1>
+          <p className="mt-2 text-[15px] leading-[21px] text-white/55">A few quick permissions. Change them anytime in Settings.</p>
+          <div className="mt-5 flex items-center gap-3">
+            <div className="flex flex-1 gap-[6px]">
+              {ITEMS.map((i) => (
+                <div key={i.id} className="h-[4px] flex-1 overflow-hidden rounded-full bg-white/10">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: `linear-gradient(90deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
+                    initial={false}
+                    animate={{ width: resolved(status[i.id]) ? "100%" : "0%" }}
+                    transition={{ duration: 0.45, ease: [0.2, 0.8, 0.2, 1] }}
+                  />
+                </div>
+              ))}
+            </div>
+            <span className="text-[13px] font-medium tabular-nums text-white/55">
+              {done} of {ITEMS.length}
+            </span>
           </div>
-          <span className="text-[13px] font-medium tabular-nums text-white/55">
-            {done} of {ITEMS.length}
-          </span>
+        </div>
+
+        <div className="relative mt-8 space-y-[10px] px-4">
+          {ITEMS.map((item) => (
+            <PermissionRow
+              key={item.id}
+              item={item}
+              status={status[item.id]}
+              label={statusLabel(item.id)}
+              isNext={item.id === next}
+              onPress={() => !resolved(status[item.id]) && setFocus(item.id)}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="no-scrollbar relative mt-5 flex-1 space-y-[10px] overflow-y-auto px-4 pb-4">
-        {ITEMS.map((item) => (
-          <PermissionRow
-            key={item.id}
-            item={item}
-            status={status[item.id]}
-            label={statusLabel(item.id)}
-            expanded={item.id === active}
-            onPress={() => request(item.id)}
-            onSkip={() => set(item.id, "skipped")}
+      {/* Focused step for one permission */}
+      <AnimatePresence>
+        {focused && (
+          <FocusStep
+            key={focused.id}
+            item={focused}
+            step={ITEMS.indexOf(focused) + 1}
+            allowed={justAllowed}
+            onBack={() => setFocus(null)}
+            onAllow={() => request(focused.id)}
+            onNotNow={() => settle(focused.id, "skipped")}
           />
-        ))}
-      </div>
+        )}
+      </AnimatePresence>
 
       <SystemAlert alert={alert} />
       <ShortcutSheet
@@ -240,14 +279,97 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
         onClose={() => setShortcutOpen(false)}
         onSkip={() => {
           setShortcutOpen(false);
-          set("shortcut", "skipped");
+          settle("shortcut", "skipped");
         }}
         onComplete={(choice) => {
           setShortcut(choice);
           setShortcutOpen(false);
-          set("shortcut", "granted");
+          settle("shortcut", "granted");
         }}
       />
+    </motion.div>
+  );
+}
+
+function FocusStep({
+  item,
+  step,
+  allowed,
+  onBack,
+  onAllow,
+  onNotNow,
+}: {
+  item: Item;
+  step: number;
+  allowed: boolean;
+  onBack: () => void;
+  onAllow: () => void;
+  onNotNow: () => void;
+}) {
+  return (
+    <motion.div
+      className="pt-safe pb-safe absolute inset-0 z-20 flex flex-col bg-ink"
+      initial={{ x: "100%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "100%" }}
+      transition={{ type: "spring", stiffness: 380, damping: 40 }}
+    >
+      <Aurora />
+
+      <div className="relative flex h-[44px] items-center justify-between px-2">
+        <button type="button" onClick={onBack} aria-label="Back" className="flex h-[44px] w-[44px] items-center justify-center active:opacity-40">
+          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 2L2 10l8 8" />
+          </svg>
+        </button>
+        <span className="text-[13px] font-medium tabular-nums text-white/50">
+          {step} of {ITEMS.length}
+        </span>
+        <span className="w-[44px]" />
+      </div>
+
+      {/* The examples get the room */}
+      <div className="relative flex flex-1 items-center justify-center px-7">{item.hero}</div>
+
+      <div className="relative px-6 pb-2">
+        <h2 className="text-[30px] font-bold leading-[36px] tracking-[-0.03em]">{item.headline}</h2>
+        <p className="mt-2 text-[16px] leading-[23px] text-white/60">{item.line}</p>
+        <div className="mt-6">
+          <Button onClick={onAllow}>{item.cta}</Button>
+          <div className="mt-1 flex h-[44px] justify-center">
+            {item.optional && (
+              <TextButton onClick={onNotNow} className="text-white/70">
+                Not now
+              </TextButton>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Allowed: a quick check before heading back to the list */}
+      <AnimatePresence>
+        {allowed && (
+          <motion.div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-ink/80 backdrop-blur-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="flex h-[96px] w-[96px] items-center justify-center rounded-full"
+              style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
+              initial={{ scale: 0.4 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 400, damping: 16 }}
+            >
+              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                <motion.path d="M5 12.5l4.5 4.5L19 7.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35, delay: 0.1 }} />
+              </svg>
+            </motion.div>
+            <div className="mt-4 text-[17px] font-semibold">{item.name} on</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -256,97 +378,46 @@ function PermissionRow({
   item,
   status,
   label,
-  expanded,
+  isNext,
   onPress,
-  onSkip,
 }: {
   item: Item;
   status: Status;
   label: string | null;
-  expanded: boolean;
+  isNext: boolean;
   onPress: () => void;
-  onSkip: () => void;
 }) {
   const isDone = resolved(status);
   return (
-    <motion.div
-      layout
-      role="button"
-      tabIndex={0}
-      aria-label={isDone ? `${item.title}: ${label}` : item.cta}
+    <motion.button
+      type="button"
       onClick={onPress}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onPress()}
       whileTap={isDone ? undefined : { scale: 0.985 }}
-      className={`relative cursor-pointer overflow-hidden rounded-[24px] border outline-none ${
-        expanded ? "border-white/20 bg-white/[0.08]" : "border-white/[0.08] bg-white/[0.04]"
+      aria-label={isDone ? `${item.name}: ${label}` : `Set up ${item.name}`}
+      className={`flex w-full items-center gap-3 rounded-[22px] border p-4 text-left transition-colors ${
+        isNext ? "border-white/25 bg-white/[0.09]" : "border-white/[0.07] bg-white/[0.04]"
       } ${isDone ? "cursor-default" : ""}`}
-      transition={{ layout: { type: "spring", stiffness: 380, damping: 36 } }}
     >
-      <motion.div layout="position" className="flex items-center gap-3 p-4">
-        <div
-          className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] text-white transition-colors duration-300"
-          style={{
-            background: expanded || isDone ? `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` : "rgba(255,255,255,0.08)",
-            opacity: isDone && status === "skipped" ? 0.5 : 1,
-          }}
-        >
-          {item.icon}
+      <div
+        className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[14px] text-white transition-colors duration-300"
+        style={{
+          background: isNext || isDone ? `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` : "rgba(255,255,255,0.08)",
+          opacity: status === "skipped" ? 0.5 : 1,
+        }}
+      >
+        {item.icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[17px] font-semibold">{item.name}</span>
+          {item.optional && !isDone && <span className="rounded-full bg-white/10 px-2 py-[1px] text-[11px] font-medium text-white/60">Optional</span>}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-[17px] font-semibold">{item.title}</span>
-            {item.optional && !isDone && (
-              <span className="rounded-full bg-white/10 px-2 py-[1px] text-[11px] font-medium text-white/60">Optional</span>
-            )}
-          </div>
-          <div
-            className={`mt-[1px] truncate text-[13px] ${
-              status === "denied" ? "text-[#FF8AA2]" : isDone ? "text-white/55" : "text-white/45"
-            }`}
-          >
-            {label ?? (expanded ? "Tap to allow" : item.description)}
-          </div>
-        </div>
-        <StatusIcon status={status} />
-      </motion.div>
-
-      <AnimatePresence initial={false}>
-        {expanded && (
-          <motion.div
-            key="detail"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
-          >
-            <div className="px-4 pb-4">
-              <p className="text-[15px] leading-[21px] text-white/75">{item.description}</p>
-              <div className="mt-3">{item.preview}</div>
-              <div className="mt-4 flex items-center gap-2">
-                <span
-                  className="flex h-[46px] flex-1 items-center justify-center rounded-full text-[16px] font-semibold"
-                  style={{ background: `linear-gradient(100deg, ${BRAND.colors.rose}, ${BRAND.colors.overlap} 55%, ${BRAND.colors.violet})` }}
-                >
-                  {item.cta}
-                </span>
-                {item.optional && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSkip();
-                    }}
-                    className="h-[46px] rounded-full bg-white/10 px-5 text-[16px] font-semibold text-white/80 active:opacity-60"
-                  >
-                    Skip
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
+        {label && (
+          <div className={`mt-[1px] text-[13px] ${status === "denied" ? "text-[#FF8AA2]" : isNext ? "text-[#FF8AA2]" : "text-white/50"}`}>{label}</div>
         )}
-      </AnimatePresence>
-    </motion.div>
+      </div>
+      <StatusIcon status={status} />
+    </motion.button>
   );
 }
 
@@ -382,7 +453,11 @@ function StatusIcon({ status }: { status: Status }) {
             !
           </motion.span>
         ) : (
-          <motion.span key="empty" className="absolute inset-0 rounded-full border-[1.5px] border-white/25" initial={{ scale: 0.6 }} animate={{ scale: 1 }} />
+          <motion.span key="chevron" className="absolute inset-0 flex items-center justify-center text-white/35" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1.5 1.5l5 5-5 5" />
+            </svg>
+          </motion.span>
         )}
       </AnimatePresence>
     </div>

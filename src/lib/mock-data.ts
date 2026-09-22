@@ -31,9 +31,11 @@ const unsplash = (id: string, w = 360, h = 460) =>
 
 export type Media = {
   id: string;
+  /** Photo, or the poster frame for a video. */
   src: string;
   kind: "photo" | "video";
-  /** Videos are mocked with a slow pan over a still; this is the label shown. */
+  /** Playable file for videos (vertical, 9:16). */
+  video?: string;
   duration?: string;
   source: "instagram" | "camera";
   /** Title Muse wrote for it; the user can edit it. */
@@ -43,46 +45,100 @@ export type Media = {
 /** An expired Instagram Story from the user's archive. */
 export type Story = Media & { likes: number; postedAt: string; caption: string };
 
-const media = (id: string, rest: Omit<Media, "id" | "src">): Media => ({ id, src: unsplash(id, 480, 800), ...rest });
-const story = (id: string, rest: Omit<Story, "id" | "src" | "source">): Story => ({ id, src: unsplash(id, 480, 800), source: "instagram", ...rest });
+// Story media is from Pexels (free license). Tony is played by one model throughout
+// (the white-tee kitchen series by Vlada Karpovich), so he looks consistent everywhere.
+const pexelsPhoto = (id: number, w = 540, h = 960) =>
+  `https://images.pexels.com/photos/${id}/pexels-photo-${id}.jpeg?auto=compress&cs=tinysrgb&w=${w}&h=${h}&fit=crop`;
+const pexelsPoster = (id: number, file: string) =>
+  `https://images.pexels.com/videos/${id}/${file}?auto=compress&cs=tinysrgb&w=540&h=960&fit=crop`;
+const pexelsVideo = (id: number, file: string) => `https://videos.pexels.com/video-files/${id}/${id}-${file}.mp4`;
+
+type StoryInfo = Pick<Story, "likes" | "postedAt" | "caption">;
+
+const photoStory = (id: number, info: StoryInfo): Story => ({
+  id: `px-${id}`,
+  src: pexelsPhoto(id),
+  kind: "photo",
+  source: "instagram",
+  ...info,
+});
+
+const videoStory = (id: number, poster: string, file: string, duration: string, info: StoryInfo): Story => ({
+  id: `px-${id}`,
+  src: pexelsPoster(id, poster),
+  video: pexelsVideo(id, file),
+  kind: "video",
+  duration,
+  source: "instagram",
+  ...info,
+});
 
 /** Profile photo, brought over from Instagram. */
-export const PROFILE_PHOTO = unsplash("1507003211169-0a1dd7228f2d", 600, 800);
+export const PROFILE_PHOTO = pexelsPhoto(6947058, 800, 1000);
 
 /** The user's most-loved expired Stories, as Muse ranks them. Titles are Muse's. */
 export const TOP_STORIES: Story[] = [
-  story("1501555088652-021faa106b9b", { kind: "video", duration: "0:12", likes: 214, postedAt: "Aug 17", caption: "Up early for the Marin hike" }),
-  story("1612874742237-6526221588e3", { kind: "photo", likes: 186, postedAt: "Sep 6", caption: "Fresh pasta, attempt #4" }),
-  story("1556910103-1c02745aae4d", { kind: "video", duration: "0:08", likes: 171, postedAt: "Jul 28", caption: "Cooking for the crew" }),
-  story("1565299585323-38d6b0865b47", { kind: "photo", likes: 142, postedAt: "Aug 17", caption: "Tacos after the trail" }),
-  story("1519861531473-9200262188bf", { kind: "video", duration: "0:06", likes: 97, postedAt: "Sep 11", caption: "Thursday hoops" }),
-  story("1501594907352-04cda38ebc29", { kind: "photo", likes: 88, postedAt: "Jun 30", caption: "Golden hour at the bridge" }),
+  videoStory(6998504, "cooking-cooking-man-cooking-time-dough-6998504.jpeg", "sd_540_960_25fps", "0:07", {
+    likes: 231,
+    postedAt: "Aug 24",
+    caption: "Sunday pancakes for the crew",
+  }),
+  photoStory(36587729, { likes: 214, postedAt: "Aug 17", caption: "Marin Headlands, before the crowds" }),
+  videoStory(6289336, "pexels-photo-6289336.jpeg", "sd_540_960_25fps", "0:08", {
+    likes: 186,
+    postedAt: "Sep 6",
+    caption: "Pasta night, round four",
+  }),
+  photoStory(30208564, { likes: 171, postedAt: "Jul 28", caption: "Dinner for eight at mine" }),
+  videoStory(8448095, "adult-beer-bread-cheese-8448095.jpeg", "sd_540_960_24fps", "0:12", {
+    likes: 142,
+    postedAt: "Aug 17",
+    caption: "Tacos after the trail",
+  }),
+  photoStory(36880013, { likes: 97, postedAt: "Sep 11", caption: "Thursday hoops" }),
 ];
 
 /** How many of the top stories Muse pre-selects. */
 export const PRESELECTED_STORIES = 4;
 
-/** Other archived Stories (filler for Muse's scan). */
-export const OTHER_STORIES: Media[] = [
-  media("1551632811-561732d1e306", { kind: "photo", source: "instagram" }),
-  media("1556761223-4c4282c73f77", { kind: "photo", source: "instagram" }),
-  media("1529543544282-ea669407fca3", { kind: "photo", source: "instagram" }),
-  media("1519681393784-d120267933ba", { kind: "video", duration: "0:15", source: "instagram" }),
-  media("1551504734-5ee1c4a1479b", { kind: "photo", source: "instagram" }),
-  media("1464822759023-fed622ff2c3b", { kind: "photo", source: "instagram" }),
+/** More of the archive, for "Add from stories" (and the filler in Muse's scan). */
+export const ARCHIVE_STORIES: Story[] = [
+  videoStory(3062958, "free-video-3062958.jpg", "sd_540_960_24fps", "0:22", {
+    likes: 83,
+    postedAt: "Jun 30",
+    caption: "Finally walked the bridge",
+  }),
+  photoStory(6947049, { likes: 76, postedAt: "Aug 24", caption: "The stack held up" }),
+  videoStory(4253146, "pexels-photo-4253146.jpeg", "sd_506_960_25fps", "0:41", {
+    likes: 64,
+    postedAt: "Jan 12",
+    caption: "Grandma's broth, my attempt",
+  }),
+  photoStory(20146210, { likes: 58, postedAt: "May 3", caption: "Coast at dawn" }),
+  photoStory(27928433, { likes: 51, postedAt: "Feb 9", caption: "Hot pot Sunday" }),
+  photoStory(17602394, { likes: 44, postedAt: "Sep 4", caption: "Night shootaround" }),
 ];
+
+const cameraPhoto = (id: number, caption: string, url = pexelsPhoto(id)): Media => ({
+  id: `cam-${id}`,
+  src: url,
+  kind: "photo",
+  source: "camera",
+  caption,
+});
+const unsplashPhoto = (id: string) => `https://images.unsplash.com/photo-${id}?w=540&h=960&fit=crop&auto=format&q=70`;
 
 /** The camera roll, for adding moments that were never a Story. Muse titles these too. */
 export const CAMERA_ROLL_MEDIA: Media[] = [
-  media("1495474472287-4d71bcdd2085", { kind: "photo", source: "camera", caption: "Coffee first, always" }),
-  media("1464278533981-50106e6176b1", { kind: "video", duration: "0:21", source: "camera", caption: "Quiet lake morning" }),
-  media("1507048331197-7d4ac70811cf", { kind: "photo", source: "camera", caption: "Sunday prep" }),
-  media("1483721310020-03333e577078", { kind: "video", duration: "0:06", source: "camera", caption: "Laces tied, let's go" }),
-  media("1517457373958-b7bdd4587205", { kind: "photo", source: "camera", caption: "Long dinners outside" }),
-  media("1452587925148-ce544e77e70d", { kind: "photo", source: "camera", caption: "Film camera phase" }),
-  media("1509042239860-f550ce710b93", { kind: "photo", source: "camera", caption: "Latte art attempt" }),
-  media("1449034446853-66c86144b0ad", { kind: "photo", source: "camera", caption: "Weekend in the city" }),
-  media("1556761223-4c4282c73f77", { kind: "photo", source: "camera", caption: "The perfect twirl" }),
+  cameraPhoto(6947061, "Brunch prep"),
+  cameraPhoto(6947059, "Plating up"),
+  cameraPhoto(32476250, "Top of the headlands"),
+  { id: "cam-coffee", src: unsplashPhoto("1495474472287-4d71bcdd2085"), kind: "photo", source: "camera", caption: "Coffee first, always" },
+  { id: "cam-lake", src: unsplashPhoto("1464278533981-50106e6176b1"), kind: "photo", source: "camera", caption: "Quiet lake morning" },
+  { id: "cam-dinner", src: unsplashPhoto("1517457373958-b7bdd4587205"), kind: "photo", source: "camera", caption: "Long dinners outside" },
+  { id: "cam-film", src: unsplashPhoto("1452587925148-ce544e77e70d"), kind: "photo", source: "camera", caption: "Film camera phase" },
+  { id: "cam-latte", src: unsplashPhoto("1509042239860-f550ce710b93"), kind: "photo", source: "camera", caption: "Latte art attempt" },
+  { id: "cam-city", src: unsplashPhoto("1449034446853-66c86144b0ad"), kind: "photo", source: "camera", caption: "Weekend in the city" },
 ];
 
 /** Camera-roll style photos for the photo-permission preview. */
