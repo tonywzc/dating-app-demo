@@ -50,7 +50,7 @@ export type ProfileField = {
   placeholder?: string;
 };
 
-/** "About you", prefilled from the user's Meta accounts (mocked). */
+/** "About you", prefilled from the user's Meta accounts (mocked). Every field is filled so the happy path is one tap. */
 export const PROFILE_PREFILL: { basics: ProfileField[]; life: ProfileField[]; interests: string[] } = {
   basics: [
     { id: "name", label: "First name", value: "Tony", source: "instagram", kind: "text" },
@@ -58,7 +58,8 @@ export const PROFILE_PREFILL: { basics: ProfileField[]; life: ProfileField[]; in
     {
       id: "gender",
       label: "Gender",
-      value: "",
+      value: "Man",
+      source: "facebook",
       kind: "choice",
       options: ["Man", "Woman", "Nonbinary", "Another gender"],
       required: true,

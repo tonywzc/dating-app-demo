@@ -62,7 +62,7 @@ const APP = `“${BRAND.name}”`;
 
 const resolved = (s: Status) => s !== "pending" && s !== "denied";
 
-export function PermissionsFlow({ onComplete }: { onComplete: () => void }) {
+export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const [status, setStatus] = useState<Record<PermissionId, Status>>({
     notifications: "pending",
     voice: "pending",
@@ -89,6 +89,23 @@ export function PermissionsFlow({ onComplete }: { onComplete: () => void }) {
     setAlert(null);
     set(id, s);
   };
+
+  // Skipping is allowed, but we ask once more: these permissions carry the core experience.
+  const confirmSkip = () =>
+    setAlert({
+      title: "Are you sure?",
+      message: `These permissions are really useful \u{1F979} Without them, you could miss matches, messages, and chats with your agent.`,
+      buttons: [
+        {
+          label: "Skip anyway",
+          onPress: () => {
+            setAlert(null);
+            onSkip();
+          },
+        },
+        { label: "Keep going", style: "preferred", onPress: () => setAlert(null) },
+      ],
+    });
 
   const askCamera = (photos: Status) =>
     setAlert({
@@ -162,6 +179,16 @@ export function PermissionsFlow({ onComplete }: { onComplete: () => void }) {
       exit={{ opacity: 0, transition: { duration: 0.35 } }}
     >
       <Aurora />
+
+      {!allDone && (
+        <button
+          type="button"
+          onClick={confirmSkip}
+          className="absolute right-4 top-[calc(var(--safe-top)+6px)] z-10 h-[36px] rounded-full bg-white/10 px-4 text-[15px] font-semibold text-white/80 backdrop-blur-xl active:opacity-60"
+        >
+          Skip
+        </button>
+      )}
 
       <div className="relative px-6 pt-5">
         <h1 className="text-[32px] font-bold leading-[38px] tracking-[-0.03em]">

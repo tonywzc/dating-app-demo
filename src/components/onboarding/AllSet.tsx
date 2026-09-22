@@ -28,7 +28,8 @@ const GUIDE_AT = 1700;
 const HOLD_MS = 1400;
 
 /** Celebrates finishing setup, then previews the auto-filled profile and hands off to "About you". */
-export function AllSet({ name, onDone }: { name: string; onDone: () => void }) {
+/** `skipped`: the user skipped permission setup, so welcome them without claiming everything is set. */
+export function AllSet({ name, skipped = false, onDone }: { name: string; skipped?: boolean; onDone: () => void }) {
   const [phase, setPhase] = useState<Phase>("check");
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export function AllSet({ name, onDone }: { name: string; onDone: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.5 }}
         >
-          You&apos;re all set, {name}.
+          {skipped ? `Welcome, ${name}.` : `You\u2019re all set, ${name}.`}
         </motion.h1>
         <motion.p
           layout="position"
@@ -78,7 +79,7 @@ export function AllSet({ name, onDone }: { name: string; onDone: () => void }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.5 }}
         >
-          Welcome to {BRAND.name}.
+          {skipped ? "You can turn on permissions anytime in Settings." : `Welcome to ${BRAND.name}.`}
         </motion.p>
       </motion.div>
 

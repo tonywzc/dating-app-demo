@@ -128,7 +128,7 @@ export function AboutYou({ onDone }: { onDone: (profile: ProfileBasics) => void 
         </div>
 
         <div className="pb-safe absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#121118] via-[#121118]/95 to-transparent px-5 pt-10">
-          <Button onClick={finish}>Looks good</Button>
+          <Button onClick={finish}>Next</Button>
           <p className="mt-2 h-[18px] text-center text-[13px] text-white/45">
             {missing ? `Add your ${missing.label.toLowerCase()} to continue` : "You can edit this later in your profile"}
           </p>

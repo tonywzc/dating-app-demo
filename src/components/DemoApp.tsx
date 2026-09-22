@@ -56,13 +56,21 @@ function Onboarding() {
   const [selected, setSelected] = useState(PRIMARY_ACCOUNT.username);
   const [pending, setPending] = useState<"continue" | "confirm" | null>(null);
   const [profile, setProfile] = useState<ProfileBasics | null>(null);
+  const [skippedPermissions, setSkippedPermissions] = useState(false);
 
   const account = accounts.find((a) => a.username === selected) ?? accounts[0];
   const name = profile?.firstName ?? account.displayName;
 
   const finishSplash = useCallback(() => setScreen((s) => (s === "splash" ? "accounts" : s)), []);
   const finishSetup = useCallback(() => setScreen("permissions"), []);
-  const finishPermissions = useCallback(() => setScreen("allSet"), []);
+  const finishPermissions = useCallback(() => {
+    setSkippedPermissions(false);
+    setScreen("allSet");
+  }, []);
+  const skipPermissions = useCallback(() => {
+    setSkippedPermissions(true);
+    setScreen("allSet");
+  }, []);
   const finishAllSet = useCallback(() => setScreen((s) => (s === "allSet" ? "about" : s)), []);
 
   const continueWithAccount = () => {
@@ -118,8 +126,8 @@ function Onboarding() {
           />
         )}
         {screen === "settingUp" && <SettingUp key="settingUp" account={account} onDone={finishSetup} />}
-        {screen === "permissions" && <PermissionsFlow key="permissions" onComplete={finishPermissions} />}
-        {screen === "allSet" && <AllSet key="allSet" name={name} onDone={finishAllSet} />}
+        {screen === "permissions" && <PermissionsFlow key="permissions" onComplete={finishPermissions} onSkip={skipPermissions} />}
+        {screen === "allSet" && <AllSet key="allSet" name={name} skipped={skippedPermissions} onDone={finishAllSet} />}
         {screen === "about" && (
           <AboutYou
             key="about"
