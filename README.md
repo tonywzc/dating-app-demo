@@ -9,7 +9,7 @@ npm run dev -- -p 3100
 - Desktop: open http://localhost:3100. The phone frame scales to fit the window.
 - Real iPhone: open the same URL on your phone (same network, use your Mac's IP). The frame drops away and the app fills the screen; "Add to Home Screen" makes it look like an installed app.
 - `?speed=0.25` plays the launch animation in slow motion.
-- `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `welcome`.
+- `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `stories`, `welcome`.
 - On desktop, the frame's Action Button (upper left side of the phone) is pressable: hold it during the voice-shortcut "Try it" step.
 
 ## What's in it
@@ -28,6 +28,8 @@ npm run dev -- -p 3100
 | About you | Prefilled from Instagram / Facebook (mock), every field editable, interests add/remove, gender required |
 | Talk with Muse | Tap the mic (no holding) and talk; Muse replies when you pause. Quick questions swap the mic for choices; open ones give it back. Stop any time → "That's me, for now". Your speech is simulated from a script. |
 | Muse's summary | Structured card of who you are and who you're hoping to meet, plus the share of nearby members you'd be a great fit for. "Tell Muse more" goes back to the conversation. |
+| Your stories | Muse scans the Instagram Story archive and brings back the most-loved expired Stories, each with a title Muse wrote (editable in place). Toggle which to add, add more from the camera roll, or skip. |
+| Profile preview | "Here's how people will see you": main photo, Muse's take, stories with their titles. |
 | End | Replay onboarding, or sign out back to the account picker |
 
 ## Where things live
@@ -39,6 +41,7 @@ npm run dev -- -p 3100
 - `src/components/permissions/`: permission checklist, previews and the voice-shortcut sheet
 - `src/components/profile/`: "About you" and its edit sheet
 - `src/components/muse/`: Muse avatar, backdrop, conversation engine, summary
+- `src/components/photos/`: Story scan, stories picker with editable titles, camera-roll picker, profile preview
 - `src/lib/muse-script.ts`: what Muse asks, the simulated answers, and how answers become the summary and fit %
 - `src/components/ios/`: iOS system alert
 - `src/components/device/`: iPhone frame, status bar and the pressable Action Button

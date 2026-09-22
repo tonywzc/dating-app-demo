@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { summarize } from "@/lib/muse-script";
+import { summarize, type Summary } from "@/lib/muse-script";
 import { DEFAULT_MUSE, type Account } from "@/lib/mock-data";
 import { MuseProcessing } from "./MuseProcessing";
 import { MuseResult, type ProfileBasics } from "./MuseResult";
@@ -12,7 +12,7 @@ import { useConversation } from "./useConversation";
 type Phase = "talk" | "processing" | "result";
 
 /** Talk with Muse about yourself and your type, then see Muse's summary and your circle. */
-export function MuseFlow({ account, profile, onDone }: { account: Account; profile: ProfileBasics; onDone: () => void }) {
+export function MuseFlow({ account, profile, onDone }: { account: Account; profile: ProfileBasics; onDone: (summary: Summary) => void }) {
   const muse = account.muse ?? DEFAULT_MUSE;
   const convo = useConversation(profile.firstName);
   const [phase, setPhase] = useState<Phase>("talk");
@@ -32,7 +32,7 @@ export function MuseFlow({ account, profile, onDone }: { account: Account; profi
             account={account}
             profile={profile}
             summary={summary}
-            onContinue={onDone}
+            onContinue={() => onDone(summary)}
             onTellMore={() => setPhase("talk")}
           />
         )}

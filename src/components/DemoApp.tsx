@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { AnimatePresence } from "motion/react";
-import { PRIMARY_ACCOUNT, PROFILE_PREFILL, type Account } from "@/lib/mock-data";
+import { DEFAULT_MUSE, PRIMARY_ACCOUNT, PROFILE_PREFILL, type Account } from "@/lib/mock-data";
 import { ageFrom } from "@/lib/format";
 import { PhoneFrame } from "@/components/device/PhoneFrame";
 import { SplashScreen } from "@/components/onboarding/SplashScreen";
@@ -17,14 +17,16 @@ import { Welcome } from "@/components/onboarding/Welcome";
 import { PermissionsFlow } from "@/components/permissions/PermissionsFlow";
 import { AboutYou } from "@/components/profile/AboutYou";
 import { MuseFlow } from "@/components/muse/MuseFlow";
+import { StoriesFlow } from "@/components/photos/StoriesFlow";
+import { SAMPLE_ANSWERS, summarize, type Summary } from "@/lib/muse-script";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 
-type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "welcome";
+type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "stories" | "welcome";
 type SheetName = "switch" | "connect" | LegalDoc;
 
 const noop = () => () => {};
 
-const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "welcome"];
+const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "stories", "welcome"];
 
 const prefill = (id: string) => [...PROFILE_PREFILL.basics, ...PROFILE_PREFILL.life].find((f) => f.id === id)?.value ?? "";
 
@@ -34,6 +36,9 @@ const DEFAULT_PROFILE: ProfileBasics = {
   age: ageFrom(prefill("birthday")),
   location: prefill("location"),
 };
+
+/** Muse's summary before the user has talked to Muse (e.g. `?start=stories`). */
+const DEFAULT_SUMMARY: Summary = summarize(SAMPLE_ANSWERS);
 
 /** `?start=permissions` jumps straight to a screen (for reviews and demos). */
 function startScreen(): Screen {
@@ -57,6 +62,7 @@ function Onboarding() {
   const [pending, setPending] = useState<"continue" | "confirm" | null>(null);
   const [profile, setProfile] = useState<ProfileBasics | null>(null);
   const [skippedPermissions, setSkippedPermissions] = useState(false);
+  const [summary, setSummary] = useState<Summary | null>(null);
 
   const account = accounts.find((a) => a.username === selected) ?? accounts[0];
   const name = profile?.firstName ?? account.displayName;
@@ -138,7 +144,24 @@ function Onboarding() {
           />
         )}
         {screen === "muse" && (
-          <MuseFlow key="muse" account={account} profile={profile ?? DEFAULT_PROFILE} onDone={() => setScreen("welcome")} />
+          <MuseFlow
+            key="muse"
+            account={account}
+            profile={profile ?? DEFAULT_PROFILE}
+            onDone={(result) => {
+              setSummary(result);
+              setScreen("stories");
+            }}
+          />
+        )}
+        {screen === "stories" && (
+          <StoriesFlow
+            key="stories"
+            muse={account.muse ?? DEFAULT_MUSE}
+            profile={profile ?? DEFAULT_PROFILE}
+            summary={summary ?? DEFAULT_SUMMARY}
+            onDone={() => setScreen("welcome")}
+          />
         )}
         {screen === "welcome" && <Welcome key="welcome" account={account} name={name} onReplay={replay} onSignOut={signOut} />}
       </AnimatePresence>

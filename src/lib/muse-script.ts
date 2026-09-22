@@ -128,6 +128,13 @@ export const BEATS: Beat[] = [
 
 export const fill = (text: string, name: string) => text.replaceAll("{name}", name);
 
+/** A complete conversation, for screens reached without talking to Muse first (e.g. `?start=photos`). */
+export const SAMPLE_ANSWERS: Record<string, string> = Object.fromEntries(
+  BEATS.flatMap((b) =>
+    b.expects.type === "open" ? [[b.id, b.expects.answer]] : b.expects.type === "quick" ? [[b.id, b.expects.options[0]]] : [],
+  ),
+);
+
 // ---------- Summary ----------
 
 export type Answers = Record<string, string>;

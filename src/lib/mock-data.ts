@@ -29,6 +29,62 @@ export const OTHER_ACCOUNTS: Account[] = [
 const unsplash = (id: string, w = 360, h = 460) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
 
+export type Media = {
+  id: string;
+  src: string;
+  kind: "photo" | "video";
+  /** Videos are mocked with a slow pan over a still; this is the label shown. */
+  duration?: string;
+  source: "instagram" | "camera";
+  /** Title Muse wrote for it; the user can edit it. */
+  caption?: string;
+};
+
+/** An expired Instagram Story from the user's archive. */
+export type Story = Media & { likes: number; postedAt: string; caption: string };
+
+const media = (id: string, rest: Omit<Media, "id" | "src">): Media => ({ id, src: unsplash(id, 480, 800), ...rest });
+const story = (id: string, rest: Omit<Story, "id" | "src" | "source">): Story => ({ id, src: unsplash(id, 480, 800), source: "instagram", ...rest });
+
+/** Profile photo, brought over from Instagram. */
+export const PROFILE_PHOTO = unsplash("1507003211169-0a1dd7228f2d", 600, 800);
+
+/** The user's most-loved expired Stories, as Muse ranks them. Titles are Muse's. */
+export const TOP_STORIES: Story[] = [
+  story("1501555088652-021faa106b9b", { kind: "video", duration: "0:12", likes: 214, postedAt: "Aug 17", caption: "Up early for the Marin hike" }),
+  story("1612874742237-6526221588e3", { kind: "photo", likes: 186, postedAt: "Sep 6", caption: "Fresh pasta, attempt #4" }),
+  story("1556910103-1c02745aae4d", { kind: "video", duration: "0:08", likes: 171, postedAt: "Jul 28", caption: "Cooking for the crew" }),
+  story("1565299585323-38d6b0865b47", { kind: "photo", likes: 142, postedAt: "Aug 17", caption: "Tacos after the trail" }),
+  story("1519861531473-9200262188bf", { kind: "video", duration: "0:06", likes: 97, postedAt: "Sep 11", caption: "Thursday hoops" }),
+  story("1501594907352-04cda38ebc29", { kind: "photo", likes: 88, postedAt: "Jun 30", caption: "Golden hour at the bridge" }),
+];
+
+/** How many of the top stories Muse pre-selects. */
+export const PRESELECTED_STORIES = 4;
+
+/** Other archived Stories (filler for Muse's scan). */
+export const OTHER_STORIES: Media[] = [
+  media("1551632811-561732d1e306", { kind: "photo", source: "instagram" }),
+  media("1556761223-4c4282c73f77", { kind: "photo", source: "instagram" }),
+  media("1529543544282-ea669407fca3", { kind: "photo", source: "instagram" }),
+  media("1519681393784-d120267933ba", { kind: "video", duration: "0:15", source: "instagram" }),
+  media("1551504734-5ee1c4a1479b", { kind: "photo", source: "instagram" }),
+  media("1464822759023-fed622ff2c3b", { kind: "photo", source: "instagram" }),
+];
+
+/** The camera roll, for adding moments that were never a Story. Muse titles these too. */
+export const CAMERA_ROLL_MEDIA: Media[] = [
+  media("1495474472287-4d71bcdd2085", { kind: "photo", source: "camera", caption: "Coffee first, always" }),
+  media("1464278533981-50106e6176b1", { kind: "video", duration: "0:21", source: "camera", caption: "Quiet lake morning" }),
+  media("1507048331197-7d4ac70811cf", { kind: "photo", source: "camera", caption: "Sunday prep" }),
+  media("1483721310020-03333e577078", { kind: "video", duration: "0:06", source: "camera", caption: "Laces tied, let's go" }),
+  media("1517457373958-b7bdd4587205", { kind: "photo", source: "camera", caption: "Long dinners outside" }),
+  media("1452587925148-ce544e77e70d", { kind: "photo", source: "camera", caption: "Film camera phase" }),
+  media("1509042239860-f550ce710b93", { kind: "photo", source: "camera", caption: "Latte art attempt" }),
+  media("1449034446853-66c86144b0ad", { kind: "photo", source: "camera", caption: "Weekend in the city" }),
+  media("1556761223-4c4282c73f77", { kind: "photo", source: "camera", caption: "The perfect twirl" }),
+];
+
 /** Camera-roll style photos for the photo-permission preview. */
 export const CAMERA_ROLL = [
   "1545389336-cf090694435e",
