@@ -22,19 +22,20 @@ npm run dev -- -p 3100
 | Instagram account chooser (mock) | Pick a demo account; it joins the switcher. No sign-in fields, since the demo is shared publicly. |
 | Consent sheet | What the app receives from Instagram; Continue / Not now |
 | Setting up | Short progress checklist |
-| Permissions | A checklist hub; each permission opens its own full-screen step showing only its use cases, then the iOS system prompt. Skip (top right) asks to confirm. |
+| Permissions | A checklist hub; tapping a permission opens a 75% sheet showing only its use cases, then the iOS system prompt. After each choice the next unanswered one opens on its own. Skip (top right) asks to confirm. |
 | Voice shortcut sheet | Action Button / Back Tap / Hold the heart → Try it (hold to talk) → ready. Or skip. |
 | All set | Welcome moment, then Meta-sourced details fill an "About you" card that expands into the next screen. Tap to skip. |
 | About you | Prefilled from Instagram / Facebook (mock), every field editable, interests add/remove, gender required |
 | Talk with Muse | Tap the mic (no holding) and talk; Muse replies when you pause. Quick questions swap the mic for choices; open ones give it back. Stop any time → "That's me, for now". Your speech is simulated from a script. |
-| Muse's summary | Structured card of who you are and who you're hoping to meet, plus the share of nearby members you'd be a great fit for. "Tell Muse more" goes back to the conversation. |
+| Muse's summary | Structured card of who you are and who you're hoping to meet, plus a city-level map of San Francisco and a quiet estimate of how many people nearby could be a great fit for you. "Tell Muse more" goes back to the conversation. |
 | Your best moments | Muse scans the Instagram Story archive and brings back the most-loved expired Stories (real video included), each with a title Muse wrote, editable in place. Add more from the camera roll or the archive, or skip. |
 | Profile preview | "Here's how people will see you": main photo, Muse's take, stories with their titles. |
-| End | A thank-you and "Replay onboarding". What comes after onboarding is still undecided. |
+| End | A thank-you, a note that the demo is in progress, and "Replay onboarding". |
 
 ## Where things live
 
 - `src/lib/brand.ts`: name, colors and the mark geometry (shared by the SVG and the launch animation)
+- Map: Esri dark gray canvas tiles (© OpenStreetMap contributors), city level only.
 - `src/lib/mock-data.ts`: mock account, launch photos (Unsplash), and story media (Pexels photos and videos; Tony is one consistent model throughout)
 - `src/components/DemoApp.tsx`: screen/sheet state machine
 - `src/components/onboarding/`: launch, account, setup and welcome screens

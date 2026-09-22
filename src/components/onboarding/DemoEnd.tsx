@@ -41,7 +41,20 @@ export function DemoEnd({ onReplay }: { onReplay: () => void }) {
         That&apos;s the {BRAND.name} onboarding. We&apos;re glad you walked through it.
       </motion.p>
       <motion.div
-        className="relative mt-10 w-full max-w-[280px]"
+        className="relative mt-6 flex max-w-[300px] items-start gap-[10px] rounded-[16px] border border-white/10 bg-white/[0.05] px-4 py-3 text-left text-[13px] leading-[18px] text-white/65"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+      >
+        <motion.span
+          className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#FF8AA2]"
+          animate={{ opacity: [1, 0.35, 1] }}
+          transition={{ duration: 1.6, repeat: Infinity }}
+        />
+        This demo is a work in progress. More of the product experience is coming soon.
+      </motion.div>
+      <motion.div
+        className="relative mt-9 w-full max-w-[280px]"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.5 }}

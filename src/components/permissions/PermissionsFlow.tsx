@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { CAMERA_ROLL } from "@/lib/mock-data";
 import { SystemAlert, type AlertSpec } from "@/components/ios/SystemAlert";
 import { Button, TextButton } from "@/components/ui/Button";
+import { Sheet } from "@/components/ui/Sheet";
 import { Aurora } from "@/components/onboarding/AccountPicker";
 import { NotificationsHero, PhotosHero, ShortcutHero, VoiceHero } from "./Previews";
 import { SHORTCUT_LABEL, ShortcutSheet, type ShortcutChoice } from "./ShortcutSheet";
@@ -17,7 +18,7 @@ type Item = {
   id: PermissionId;
   /** Name in the checklist. */
   name: string;
-  /** Focused screen: headline, one sentence, button. */
+  /** Its sheet: headline, one sentence, button. */
   headline: string;
   line: string;
   cta: string;
@@ -71,8 +72,9 @@ const APP = `“${BRAND.name}”`;
 const resolved = (s: Status) => s !== "pending" && s !== "denied";
 
 /**
- * Permission setup. The checklist is the hub; each permission opens a focused,
- * full-screen step with only that permission's examples, then checks off.
+ * Permission setup. The checklist is the hub; tapping a permission opens a sheet
+ * with only that permission's examples. After a choice the sheet closes and the
+ * next unanswered permission opens on its own.
  */
 export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void; onSkip: () => void }) {
   const [status, setStatus] = useState<Record<PermissionId, Status>>({
@@ -81,7 +83,7 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
     photos: "pending",
     shortcut: "pending",
   });
-  const [focus, setFocus] = useState<PermissionId | null>(null);
+  const [open, setOpen] = useState<PermissionId | null>(null);
   const [justAllowed, setJustAllowed] = useState(false);
   const [shortcut, setShortcut] = useState<ShortcutChoice | null>(null);
   const [alert, setAlert] = useState<AlertSpec | null>(null);
@@ -93,23 +95,29 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
   const next = ITEMS.find((i) => !resolved(status[i.id]))?.id;
 
   useEffect(() => {
-    if (!allDone || focus) return;
+    if (!allDone || open || shortcutOpen) return;
     const t = setTimeout(onComplete, 900);
     return () => clearTimeout(t);
-  }, [allDone, focus, onComplete]);
+  }, [allDone, open, shortcutOpen, onComplete]);
 
-  // Settle a permission: celebrate briefly on the focused screen, then return to the list.
+  // Settle a permission: a quick check if allowed, close the sheet, then open the
+  // next one nobody has answered yet (denied ones wait on the list, no nagging).
   const settle = (id: PermissionId, s: Status) => {
     setAlert(null);
-    setStatus((prev) => ({ ...prev, [id]: s }));
-    if (s === "granted" || s === "limited") {
+    const updated = { ...status, [id]: s };
+    setStatus(updated);
+    const upcoming = ITEMS.find((i) => updated[i.id] === "pending")?.id ?? null;
+    const allowed = s === "granted" || s === "limited";
+    const close = () => {
+      setJustAllowed(false);
+      setOpen(null);
+      if (upcoming) setTimeout(() => setOpen(upcoming), 450);
+    };
+    if (allowed && open) {
       setJustAllowed(true);
-      setTimeout(() => {
-        setJustAllowed(false);
-        setFocus(null);
-      }, 900);
+      setTimeout(close, 800);
     } else {
-      setFocus(null);
+      close();
     }
   };
   const answer = (id: PermissionId, s: Status) => () => settle(id, s);
@@ -173,8 +181,10 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
           ],
         });
       case "shortcut":
+        // Hand over to the shortcut sheet.
+        setOpen(null);
         setShortcutRun((n) => n + 1);
-        return setShortcutOpen(true);
+        return setTimeout(() => setShortcutOpen(true), 300);
     }
   };
 
@@ -187,13 +197,12 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
       case "skipped":
         return "Skipped";
       case "denied":
-        return "Not allowed · Tap to try again";
+        return "Not now · Tap to turn on";
       default:
         return id === next ? "Up next" : null;
     }
   };
 
-  const focused = ITEMS.find((i) => i.id === focus);
 
   return (
     <motion.div
@@ -251,26 +260,19 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
               status={status[item.id]}
               label={statusLabel(item.id)}
               isNext={item.id === next}
-              onPress={() => !resolved(status[item.id]) && setFocus(item.id)}
+              onPress={() => !resolved(status[item.id]) && setOpen(item.id)}
             />
           ))}
         </div>
       </div>
 
-      {/* Focused step for one permission */}
-      <AnimatePresence>
-        {focused && (
-          <FocusStep
-            key={focused.id}
-            item={focused}
-            step={ITEMS.indexOf(focused) + 1}
-            allowed={justAllowed}
-            onBack={() => setFocus(null)}
-            onAllow={() => request(focused.id)}
-            onNotNow={() => settle(focused.id, "skipped")}
-          />
-        )}
-      </AnimatePresence>
+      <PermissionSheet
+        id={open}
+        allowed={justAllowed}
+        onClose={() => setOpen(null)}
+        onAllow={(id) => request(id)}
+        onNotNow={(id) => settle(id, "skipped")}
+      />
 
       <SystemAlert alert={alert} />
       <ShortcutSheet
@@ -291,86 +293,77 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
   );
 }
 
-function FocusStep({
-  item,
-  step,
+function PermissionSheet({
+  id,
   allowed,
-  onBack,
+  onClose,
   onAllow,
   onNotNow,
 }: {
-  item: Item;
-  step: number;
+  id: PermissionId | null;
   allowed: boolean;
-  onBack: () => void;
-  onAllow: () => void;
-  onNotNow: () => void;
+  onClose: () => void;
+  onAllow: (id: PermissionId) => void;
+  onNotNow: (id: PermissionId) => void;
 }) {
+  // Keep showing the last item while the sheet animates closed.
+  const [shown, setShown] = useState(id);
+  if (id && id !== shown) setShown(id);
+  const item = ITEMS.find((i) => i.id === shown);
+
   return (
-    <motion.div
-      className="pt-safe pb-safe absolute inset-0 z-20 flex flex-col bg-ink"
-      initial={{ x: "100%" }}
-      animate={{ x: 0 }}
-      exit={{ x: "100%" }}
-      transition={{ type: "spring", stiffness: 380, damping: 40 }}
-    >
-      <Aurora />
-
-      <div className="relative flex h-[44px] items-center justify-between px-2">
-        <button type="button" onClick={onBack} aria-label="Back" className="flex h-[44px] w-[44px] items-center justify-center active:opacity-40">
-          <svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M10 2L2 10l8 8" />
-          </svg>
-        </button>
-        <span className="text-[13px] font-medium tabular-nums text-white/50">
-          {step} of {ITEMS.length}
-        </span>
-        <span className="w-[44px]" />
-      </div>
-
-      {/* The examples get the room */}
-      <div className="relative flex flex-1 items-center justify-center px-7">{item.hero}</div>
-
-      <div className="relative px-6 pb-2">
-        <h2 className="text-[30px] font-bold leading-[36px] tracking-[-0.03em]">{item.headline}</h2>
-        <p className="mt-2 text-[16px] leading-[23px] text-white/60">{item.line}</p>
-        <div className="mt-6">
-          <Button onClick={onAllow}>{item.cta}</Button>
-          <div className="mt-1 flex h-[44px] justify-center">
-            {item.optional && (
-              <TextButton onClick={onNotNow} className="text-white/70">
-                Not now
-              </TextButton>
-            )}
+    <Sheet open={id !== null} onClose={onClose} size="large">
+      {item && (
+        <div key={item.id} className="flex min-h-0 flex-1 flex-col">
+          <div className="text-center text-[13px] font-medium tabular-nums text-white/40">
+            {ITEMS.indexOf(item) + 1} of {ITEMS.length}
           </div>
-        </div>
-      </div>
 
-      {/* Allowed: a quick check before heading back to the list */}
-      <AnimatePresence>
-        {allowed && (
-          <motion.div
-            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-ink/80 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="flex h-[96px] w-[96px] items-center justify-center rounded-full"
-              style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
-              initial={{ scale: 0.4 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 16 }}
-            >
-              <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-                <motion.path d="M5 12.5l4.5 4.5L19 7.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35, delay: 0.1 }} />
-              </svg>
-            </motion.div>
-            <div className="mt-4 text-[17px] font-semibold">{item.name} on</div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+          {/* The examples get the room */}
+          <div className="flex min-h-0 flex-1 items-center justify-center px-1">{item.hero}</div>
+
+          <div className="pb-1">
+            <h2 className="text-[26px] font-bold leading-[32px] tracking-[-0.02em]">{item.headline}</h2>
+            <p className="mt-[6px] text-[15px] leading-[21px] text-white/60">{item.line}</p>
+            <div className="mt-5">
+              <Button onClick={() => onAllow(item.id)}>{item.cta}</Button>
+              <div className="mt-1 flex h-[44px] justify-center">
+                {item.optional && (
+                  <TextButton onClick={() => onNotNow(item.id)} className="text-white/70">
+                    Not now
+                  </TextButton>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Allowed: a quick check, then on to the next one */}
+          <AnimatePresence>
+            {allowed && (
+              <motion.div
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-t-[38px] bg-[#1C1B22]/90 backdrop-blur-md"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <motion.div
+                  className="flex h-[84px] w-[84px] items-center justify-center rounded-full"
+                  style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
+                  initial={{ scale: 0.4 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 16 }}
+                >
+                  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+                    <motion.path d="M5 12.5l4.5 4.5L19 7.5" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.35, delay: 0.1 }} />
+                  </svg>
+                </motion.div>
+                <div className="mt-4 text-[17px] font-semibold">{item.name} on</div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </Sheet>
   );
 }
 
@@ -413,7 +406,7 @@ function PermissionRow({
           {item.optional && !isDone && <span className="rounded-full bg-white/10 px-2 py-[1px] text-[11px] font-medium text-white/60">Optional</span>}
         </div>
         {label && (
-          <div className={`mt-[1px] text-[13px] ${status === "denied" ? "text-[#FF8AA2]" : isNext ? "text-[#FF8AA2]" : "text-white/50"}`}>{label}</div>
+          <div className="mt-[1px] text-[13px] text-white/45">{label}</div>
         )}
       </div>
       <StatusIcon status={status} />
@@ -445,13 +438,10 @@ function StatusIcon({ status }: { status: Status }) {
         ) : status === "denied" ? (
           <motion.span
             key="denied"
-            className="absolute inset-0 flex items-center justify-center rounded-full bg-[#FF3F6E]/20 text-[14px] font-bold text-[#FF8AA2]"
+            className="absolute inset-0 flex items-center justify-center rounded-full border-[1.5px] border-white/25"
             initial={{ scale: 0 }}
-            animate={{ scale: 1, x: [0, -4, 4, -3, 3, 0] }}
-            transition={{ x: { duration: 0.4 } }}
-          >
-            !
-          </motion.span>
+            animate={{ scale: 1 }}
+          />
         ) : (
           <motion.span key="chevron" className="absolute inset-0 flex items-center justify-center text-white/35" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <svg width="8" height="13" viewBox="0 0 8 13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

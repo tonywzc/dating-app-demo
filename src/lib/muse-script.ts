@@ -128,7 +128,7 @@ export const BEATS: Beat[] = [
 
 export const fill = (text: string, name: string) => text.replaceAll("{name}", name);
 
-/** A complete conversation, for screens reached without talking to Muse first (e.g. `?start=photos`). */
+/** A complete conversation, for screens reached without talking to Muse first (e.g. `?start=stories`). */
 export const SAMPLE_ANSWERS: Record<string, string> = Object.fromEntries(
   BEATS.flatMap((b) =>
     b.expects.type === "open" ? [[b.id, b.expects.answer]] : b.expects.type === "quick" ? [[b.id, b.expects.options[0]]] : [],
@@ -150,7 +150,7 @@ export type Summary = {
 
 /** Active members near the user (mock). */
 export const NEARBY_MEMBERS = 36800;
-export const NEARBY_AREA = "the Bay Area";
+export const NEARBY_AREA = "San Francisco";
 
 const VIBE: Record<string, string> = {
   "Out exploring": "Out exploring",
