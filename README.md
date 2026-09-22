@@ -45,8 +45,9 @@ npm run dev -- -p 3100
 
 ## Sharing (GitHub Pages)
 
-Every push to `main` builds the static site and publishes it via `.github/workflows/deploy.yml` to
-`https://<username>.github.io/dating-app-demo/`. One-time setup: in the repo's **Settings → Pages**, set **Source** to **GitHub Actions**.
+Live at https://tonywzc.github.io/dating-app-demo/. Every push to `main` builds the static site and publishes it via
+`.github/workflows/deploy.yml`. When working with Claude Code, a Stop hook (`.claude/hooks/auto-deploy.sh`) commits and
+pushes finished changes automatically, as long as the project type-checks.
 
 To test the Pages build locally: `PAGES_BASE_PATH=/dating-app-demo npm run build` (output in `out/`).
 
