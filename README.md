@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Twine — dating app demo
 
-## Getting Started
-
-First, run the development server:
+High-fidelity iOS demo of a new standalone dating app. Web-based (Next.js), rendered inside an iPhone 17 Pro frame (402 × 874 pt). All data is mocked.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev -- -p 3100
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Desktop: open http://localhost:3100. The phone frame scales to fit the window.
+- Real iPhone: open the same URL on your phone (same network, use your Mac's IP). The frame drops away and the app fills the screen; "Add to Home Screen" makes it look like an installed app.
+- `?speed=0.25` plays the launch animation in slow motion.
+- `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `welcome`.
+- On desktop, the frame's Action Button (upper left side of the phone) is pressable: hold it during the voice-shortcut "Try it" step.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What's in it
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Screen | Flow |
+| --- | --- |
+| Launch animation | Couple photos fly in, stack, split into two strands and merge into the heart mark. Tap to skip. |
+| Account picker | Continue as `tonywzcwzc` (Instagram), switch account, Terms / Privacy sheets |
+| Switch account sheet | Pick a signed-in account or use another Instagram account |
+| Instagram account chooser (mock) | Pick a demo account; it joins the switcher. No sign-in fields, since the demo is shared publicly. |
+| Consent sheet | What the app receives from Instagram; Continue / Not now |
+| Setting up | Short progress checklist |
+| Permissions checklist | Notifications → Voice (mic) → Photos & camera → Voice shortcut (optional). Each opens an iOS system prompt; denying lets you retry. |
+| Voice shortcut sheet | Action Button / Back Tap / Hold the heart → Try it (hold to talk) → ready. Or skip. |
+| All set | Welcome moment, then Meta-sourced details fill an "About you" card that expands into the next screen. Tap to skip. |
+| About you | Prefilled from Instagram / Facebook (mock), every field editable, interests add/remove, gender required |
+| Talk with Muse | Tap the mic (no holding) and talk; Muse replies when you pause. Quick questions swap the mic for choices; open ones give it back. Stop any time → "That's me, for now". Your speech is simulated from a script. |
+| Muse's summary | Structured card of who you are and who you're hoping to meet, plus the share of nearby members you'd be a great fit for. "Tell Muse more" goes back to the conversation. |
+| End | Replay onboarding, or sign out back to the account picker |
 
-## Learn More
+## Where things live
 
-To learn more about Next.js, take a look at the following resources:
+- `src/lib/brand.ts`: name, colors and the mark geometry (shared by the SVG and the launch animation)
+- `src/lib/mock-data.ts`: mock account and memory photos (Unsplash)
+- `src/components/DemoApp.tsx`: screen/sheet state machine
+- `src/components/onboarding/`: launch, account, setup and welcome screens
+- `src/components/permissions/`: permission checklist, previews and the voice-shortcut sheet
+- `src/components/profile/`: "About you" and its edit sheet
+- `src/components/muse/`: Muse avatar, backdrop, conversation engine, summary
+- `src/lib/muse-script.ts`: what Muse asks, the simulated answers, and how answers become the summary and fit %
+- `src/components/ios/`: iOS system alert
+- `src/components/device/`: iPhone frame, status bar and the pressable Action Button
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Sharing (GitHub Pages)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Every push to `main` builds the static site and publishes it via `.github/workflows/deploy.yml` to
+`https://<username>.github.io/dating-app-demo/`. One-time setup: in the repo's **Settings → Pages**, set **Source** to **GitHub Actions**.
 
-## Deploy on Vercel
+To test the Pages build locally: `PAGES_BASE_PATH=/dating-app-demo npm run build` (output in `out/`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+To use a real profile photo, set `avatarUrl` on `PRIMARY_ACCOUNT` (e.g. drop `avatar.jpg` in `public/` and use `"/avatar.jpg"`).
