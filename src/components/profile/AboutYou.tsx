@@ -12,7 +12,7 @@ import { TopFade } from "@/components/ui/TopFade";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 import { EditFieldSheet, type EditTarget } from "./EditFieldSheet";
 
-type Field = ProfileField & { edited?: boolean };
+export type Field = ProfileField & { edited?: boolean };
 
 /** "About you": profile basics prefilled from Meta accounts, all editable. */
 export function AboutYou({ onDone }: { onDone: (profile: ProfileBasics) => void }) {
@@ -140,7 +140,7 @@ export function AboutYou({ onDone }: { onDone: (profile: ProfileBasics) => void 
   );
 }
 
-function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+export function Group({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   return (
     <section className="mt-6">
       <div className="flex items-baseline justify-between px-3 pb-2">
@@ -152,7 +152,7 @@ function Group({ title, note, children }: { title: string; note?: string; childr
   );
 }
 
-function Row({ field, onPress }: { field: Field; onPress: () => void }) {
+export function Row({ field, onPress }: { field: Field; onPress: () => void }) {
   const display = field.kind === "date" ? formatBirthday(field.value, true) : field.value;
   return (
     <motion.button

@@ -24,6 +24,7 @@ export function MuseResult({
   account,
   profile,
   summary,
+  continueLabel = "Next: your best moments",
   onContinue,
   onTellMore,
 }: {
@@ -31,6 +32,7 @@ export function MuseResult({
   account: Account;
   profile: ProfileBasics;
   summary: Summary;
+  continueLabel?: string;
   onContinue: () => void;
   onTellMore: () => void;
 }) {
@@ -130,7 +132,7 @@ export function MuseResult({
         className="pb-safe absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0A0810] via-[#0A0810]/95 to-transparent px-5 pt-10"
         {...rise(1.3)}
       >
-        <Button onClick={onContinue}>Next: your best moments</Button>
+        <Button onClick={onContinue}>{continueLabel}</Button>
         <div className="mt-1 flex justify-center">
           <TextButton onClick={onTellMore} className="text-white/70">
             Tell {muse.name} more

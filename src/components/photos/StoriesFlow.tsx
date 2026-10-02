@@ -23,7 +23,8 @@ export function StoriesFlow({
   muse: Muse;
   profile: ProfileBasics;
   summary: Summary;
-  onDone: () => void;
+  /** The moments that made it onto the profile (none if skipped). */
+  onDone: (moments: Moment[]) => void;
 }) {
   const [phase, setPhase] = useState<Phase>("scan");
   const [moments, setMoments] = useState<Moment[]>(initialMoments);
@@ -57,7 +58,7 @@ export function StoriesFlow({
             profile={profile}
             summary={summary}
             moments={skipped ? [] : moments.filter((m) => m.selected)}
-            onContinue={onDone}
+            onContinue={() => onDone(skipped ? [] : moments.filter((m) => m.selected))}
             onEdit={() => setPhase("pick")}
           />
         )}

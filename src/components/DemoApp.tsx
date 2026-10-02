@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { AnimatePresence } from "motion/react";
-import { DEFAULT_MUSE, PRIMARY_ACCOUNT, PROFILE_PREFILL, type Account } from "@/lib/mock-data";
+import { DEFAULT_MUSE, PRESELECTED_STORIES, PRIMARY_ACCOUNT, PROFILE_PREFILL, TOP_STORIES, type Account } from "@/lib/mock-data";
 import { ageFrom } from "@/lib/format";
 import { PhoneFrame } from "@/components/device/PhoneFrame";
 import { SplashScreen } from "@/components/onboarding/SplashScreen";
@@ -13,20 +13,21 @@ import { LegalSheet, type LegalDoc } from "@/components/onboarding/LegalSheet";
 import { InstagramChooser } from "@/components/onboarding/InstagramChooser";
 import { SettingUp } from "@/components/onboarding/SettingUp";
 import { AllSet } from "@/components/onboarding/AllSet";
-import { DemoEnd } from "@/components/onboarding/DemoEnd";
 import { PermissionsFlow } from "@/components/permissions/PermissionsFlow";
 import { AboutYou } from "@/components/profile/AboutYou";
 import { MuseFlow } from "@/components/muse/MuseFlow";
 import { StoriesFlow } from "@/components/photos/StoriesFlow";
-import { SAMPLE_ANSWERS, summarize, type Summary } from "@/lib/muse-script";
+import { toMoment, type Moment } from "@/components/photos/StoriesPick";
+import { MainApp } from "@/components/app/MainApp";
+import { SAMPLE_ANSWERS, summarize, type Answers, type Summary } from "@/lib/muse-script";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 
-type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "stories" | "end";
+type Screen = "splash" | "accounts" | "settingUp" | "permissions" | "allSet" | "about" | "muse" | "stories" | "app";
 type SheetName = "switch" | "connect" | LegalDoc;
 
 const noop = () => () => {};
 
-const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "stories", "end"];
+const SCREENS: Screen[] = ["splash", "accounts", "settingUp", "permissions", "allSet", "about", "muse", "stories", "app"];
 
 const prefill = (id: string) => [...PROFILE_PREFILL.basics, ...PROFILE_PREFILL.life].find((f) => f.id === id)?.value ?? "";
 
@@ -39,6 +40,9 @@ const DEFAULT_PROFILE: ProfileBasics = {
 
 /** Muse's summary before the user has talked to Muse (e.g. `?start=stories`). */
 const DEFAULT_SUMMARY: Summary = summarize(SAMPLE_ANSWERS);
+
+/** Profile moments when jumping straight into the app (`?start=app`). */
+const DEFAULT_MOMENTS: Moment[] = TOP_STORIES.slice(0, PRESELECTED_STORIES).map((s) => toMoment(s));
 
 /** `?start=permissions` jumps straight to a screen (for reviews and demos). */
 function startScreen(): Screen {
@@ -63,6 +67,8 @@ function Onboarding() {
   const [profile, setProfile] = useState<ProfileBasics | null>(null);
   const [skippedPermissions, setSkippedPermissions] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [answers, setAnswers] = useState<Answers | null>(null);
+  const [moments, setMoments] = useState<Moment[] | null>(null);
 
   const account = accounts.find((a) => a.username === selected) ?? accounts[0];
   const name = profile?.firstName ?? account.displayName;
@@ -103,12 +109,24 @@ function Onboarding() {
     setSheet("connect");
   };
 
-  const replay = () => {
+  const reset = () => {
     setSheet(null);
     setIgLogin(false);
     setProfile(null);
-    setScreen("splash");
+    setSummary(null);
+    setAnswers(null);
+    setMoments(null);
     setRun((r) => r + 1);
+  };
+
+  const replay = () => {
+    reset();
+    setScreen("splash");
+  };
+
+  const logOut = () => {
+    reset();
+    setScreen("accounts");
   };
 
   return (
@@ -142,8 +160,9 @@ function Onboarding() {
             key="muse"
             account={account}
             profile={profile ?? DEFAULT_PROFILE}
-            onDone={(result) => {
+            onDone={(result, said) => {
               setSummary(result);
+              setAnswers(said);
               setScreen("stories");
             }}
           />
@@ -154,10 +173,24 @@ function Onboarding() {
             muse={account.muse ?? DEFAULT_MUSE}
             profile={profile ?? DEFAULT_PROFILE}
             summary={summary ?? DEFAULT_SUMMARY}
-            onDone={() => setScreen("end")}
+            onDone={(picked) => {
+              setMoments(picked);
+              setScreen("app");
+            }}
           />
         )}
-        {screen === "end" && <DemoEnd key="end" onReplay={replay} />}
+        {screen === "app" && (
+          <MainApp
+            key={`app-${run}`}
+            account={account}
+            profile={profile ?? DEFAULT_PROFILE}
+            summary={summary ?? DEFAULT_SUMMARY}
+            answers={answers ?? SAMPLE_ANSWERS}
+            moments={moments ?? DEFAULT_MOMENTS}
+            onLogOut={logOut}
+            onReplay={replay}
+          />
+        )}
       </AnimatePresence>
 
       <SwitchAccountSheet
