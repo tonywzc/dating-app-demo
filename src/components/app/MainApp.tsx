@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { PEOPLE, TODAYS_PICK, type NearbyEvent, type Person } from "@/lib/app-data";
+import { MY_AREA, PEOPLE, TODAY_PICKS, type NearbyEvent, type Person } from "@/lib/app-data";
 import { DEFAULT_MUSE, PROFILE_PREFILL, type Account } from "@/lib/mock-data";
 import type { Answers, Summary } from "@/lib/muse-script";
 import { ChatThread } from "@/components/chats/ChatThread";
@@ -13,12 +13,14 @@ import { MuseFlow } from "@/components/muse/MuseFlow";
 import type { ProfileBasics } from "@/components/muse/MuseResult";
 import { NearbyTab } from "@/components/nearby/NearbyTab";
 import type { Moment } from "@/components/photos/StoriesPick";
-import { HeartIcon } from "@/components/photos/StoryScan";
+import { ChatBubbleIcon, CloseIcon } from "@/components/ui/icons";
 import { ProfileBook } from "@/components/today/ProfileBook";
 import { TodayTab, type TodayDecision } from "@/components/today/TodayTab";
 import { DEFAULT_SETTINGS, SettingsScreen, type Settings } from "@/components/you/SettingsScreen";
+import { HostSheet, type HostPlan } from "@/components/nearby/HostSheet";
 import { YouTab, type Me } from "@/components/you/YouTab";
 import { BannerHost } from "./Banner";
+import { PlusSheet, type PlusFeature } from "./PlusSheet";
 import { BackButton, PushScreen } from "./PushScreen";
 import { TabBar, type Tab } from "./TabBar";
 
@@ -48,6 +50,9 @@ function initialMe(profile: ProfileBasics, answers: Answers, moments: Moment[]):
   };
 }
 
+/** Extra introductions a week with Plus (10 instead of 7). */
+const PLUS_EXTRAS = 3;
+
 /** The app after onboarding: Today, Nearby, Chats and You. */
 export function MainApp({
   account,
@@ -73,12 +78,21 @@ export function MainApp({
   const [banner, setBanner] = useState<Banner | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [nearbyOn, setNearbyOn] = useState(false);
-  const [decision, setDecision] = useState<TodayDecision>(null);
+  const [pickIndex, setPickIndex] = useState(0);
+  const [decisions, setDecisions] = useState<Record<string, TodayDecision>>({});
   const [going, setGoing] = useState<Set<string>>(new Set());
+  const [hosted, setHosted] = useState<NearbyEvent[]>([]);
+  const [hosting, setHosting] = useState(false);
   const [summary, setSummary] = useState(initialSummary);
   const [answers, setAnswers] = useState(initialAnswers);
   const [me, setMe] = useState<Me>(() => initialMe(profile, initialAnswers, moments));
   const [talking, setTalking] = useState(false);
+
+  // Twine Plus. Plan a date and Host an event are free once.
+  const [plus, setPlus] = useState(false);
+  const [upsell, setUpsell] = useState<PlusFeature | null>(null);
+  const [uses, setUses] = useState({ date: 0, event: 0 });
+  const [extrasLeft, setExtrasLeft] = useState(PLUS_EXTRAS);
 
   const notify = useCallback((b: Omit<Banner, "id">) => setBanner({ ...b, id: String(Date.now()) }), []);
   const dismissBanner = useCallback(() => setBanner(null), []);
@@ -105,25 +119,69 @@ export function MainApp({
 
   const openThread = (personId: string) => push({ kind: "thread", tid: threadIdFor(personId) });
 
-  const pickThread = chats.threads.find((t) => t.personId === TODAYS_PICK.id);
+  /** Use a Plus feature: free the first time, then Plus only. */
+  const gate = (feature: "date" | "event", run: () => void) => {
+    if (!plus && uses[feature] >= 1) return setUpsell(feature);
+    setUses((u) => ({ ...u, [feature]: u[feature] + 1 }));
+    run();
+  };
+
+  const pick = TODAY_PICKS[pickIndex];
+  const pickThread = chats.threads.find((t) => t.personId === pick.id);
   const unread = chats.threads.reduce((n, t) => n + t.unread, 0);
   const chatting = useMemo(() => new Set(chats.threads.map((t) => t.personId)), [chats.threads]);
-  const museLast = chats.museLog.length
-    ? chats.museLog[chats.museLog.length - 1].text
-    : `Good morning, ${myName}. Today I'd like you to meet ${TODAYS_PICK.name}.`;
+  const museLast = chats.museLog.length ? chats.museLog[chats.museLog.length - 1].text : `Morning, ${myName}. Ask me anything.`;
+
+  const seeAnother = () => {
+    if (!plus) return setUpsell("more");
+    if (extrasLeft === 0 || pickIndex >= TODAY_PICKS.length - 1) {
+      notify({ title: "That's everyone for today", body: "More tomorrow at 9.", muse: true });
+      return;
+    }
+    setExtrasLeft((n) => n - 1);
+    setPickIndex((i) => i + 1);
+  };
+
+  const sayHi = (p: Person, origin: "Today" | "Nearby") => {
+    chats.expressInterest({ personId: p.id, origin, onMutual: () => openThread(p.id) });
+    openThread(p.id);
+  };
 
   const rsvp = (e: NearbyEvent) => {
     setGoing((g) => new Set(g).add(e.id));
-    notify({
-      title: e.kind === "blind" ? "Seat saved" : "You're going",
-      body: `${e.title} · ${e.when}.${settings.calendar ? ` Added to ${settings.calendar.split(" · ")[0]}.` : ""}`,
-      muse: true,
-    });
+    notify({ title: e.kind === "blind" ? "Seat saved" : "You're going", body: `${e.title} · ${e.when}`, muse: true });
   };
 
-  const sayHiNearby = (p: Person, text: string) => {
-    chats.expressInterest({ personId: p.id, origin: "Nearby", note: text });
-    openThread(p.id);
+  const host = (plan: HostPlan) => {
+    setHosting(false);
+    const id = `host-${Date.now()}`;
+    const event: NearbyEvent = {
+      id,
+      kind: "event",
+      title: plan.kind.label,
+      when: plan.when,
+      where: "Duboce Triangle",
+      photo: plan.kind.photo,
+      detail: `${plan.size} people`,
+      blurb: `Hosted by ${myName}. We'll invite people nearby you'd get along with.`,
+      x: MY_AREA.x + 40,
+      y: MY_AREA.y - 30,
+      hosting: true,
+    };
+    setHosted((list) => [event, ...list]);
+    notify({ title: "You're hosting", body: `${plan.kind.label} · ${plan.when}. Invites are going out.`, muse: true });
+  };
+
+  const subscribe = () => {
+    const feature = upsell;
+    setUpsell(null);
+    setPlus(true);
+    notify({ title: "Welcome to Plus", body: "Dates, events and 3 more people a week.", muse: true });
+    if (feature === "more") setTimeout(() => {
+      setExtrasLeft((n) => n - 1);
+      setPickIndex((i) => Math.min(i + 1, TODAY_PICKS.length - 1));
+    }, 400);
+    if (feature === "event") setTimeout(() => setHosting(true), 400);
   };
 
   return (
@@ -132,27 +190,20 @@ export function MainApp({
       <div className="absolute inset-0">
         {tab === "today" && (
           <TodayTab
-            person={TODAYS_PICK}
-            muse={muse}
-            decision={decision}
+            person={pick}
+            decision={decisions[pick.id] ?? null}
             mutual={pickThread?.status === "mutual"}
-            onInterested={(draft) => {
-              setDecision({ kind: "interested", note: draft.note, viaMuse: draft.viaMuse });
-              chats.expressInterest({
-                personId: TODAYS_PICK.id,
-                origin: "Today",
-                note: draft.note,
-                about: draft.about,
-                viaMuse: draft.viaMuse,
-                onMutual: () => openThread(TODAYS_PICK.id),
-              });
+            plus={plus}
+            extrasLeft={extrasLeft}
+            onInterested={() => {
+              setDecisions((d) => ({ ...d, [pick.id]: "interested" }));
+              sayHi(pick, "Today");
             }}
-            onPass={(reasons) => setDecision({ kind: "passed", reasons })}
-            onUndoPass={() => setDecision(null)}
-            onOpenChat={() => openThread(TODAYS_PICK.id)}
-            onReadAgain={() => push({ kind: "person", personId: TODAYS_PICK.id })}
-            onOpenNearby={() => goTab("nearby")}
-            onOpenMuse={() => push({ kind: "muse" })}
+            onPass={() => setDecisions((d) => ({ ...d, [pick.id]: "passed" }))}
+            onUndoPass={() => setDecisions((d) => ({ ...d, [pick.id]: null }))}
+            onOpenChat={() => openThread(pick.id)}
+            onReadAgain={() => push({ kind: "person", personId: pick.id })}
+            onSeeAnother={seeAnother}
           />
         )}
         {tab === "nearby" && (
@@ -161,20 +212,15 @@ export function MainApp({
             onEnable={() => setNearbyOn(true)}
             chatting={chatting}
             going={going}
-            onSayHi={sayHiNearby}
-            onOpenChat={(p) => openThread(p.id)}
+            hosted={hosted}
+            onSayHi={(p) => (chatting.has(p.id) ? openThread(p.id) : sayHi(p, "Nearby"))}
             onFullProfile={(p) => push({ kind: "person", personId: p.id })}
             onRsvp={rsvp}
+            onHost={() => gate("event", () => setHosting(true))}
           />
         )}
         {tab === "chats" && (
-          <ChatsTab
-            threads={chats.threads}
-            muse={muse}
-            museLast={museLast}
-            onOpen={(tid) => push({ kind: "thread", tid })}
-            onOpenMuse={() => push({ kind: "muse" })}
-          />
+          <ChatsTab threads={chats.threads} muse={muse} museLast={museLast} onOpen={(tid) => push({ kind: "thread", tid })} onOpenMuse={() => push({ kind: "muse" })} />
         )}
         {tab === "you" && (
           <YouTab
@@ -183,15 +229,13 @@ export function MainApp({
             muse={muse}
             summary={summary}
             answers={answers}
-            nearbyOn={nearbyOn}
-            onNearby={setNearbyOn}
             onOpenSettings={() => push({ kind: "settings" })}
             onTalkToMuse={() => setTalking(true)}
           />
         )}
       </div>
 
-      <TabBar tab={tab} onSelect={goTab} badges={{ chats: unread, today: decision ? undefined : "dot" }} />
+      <TabBar tab={tab} onSelect={goTab} badges={{ chats: unread, today: decisions[pick.id] ? undefined : "dot" }} />
 
       {/* Pushed screens */}
       <AnimatePresence>
@@ -204,13 +248,12 @@ export function MainApp({
                 myName={myName}
                 summary={summary}
                 answers={answers}
-                pick={TODAYS_PICK}
+                pick={pick}
                 log={chats.museLog}
                 typing={chats.museTyping}
                 onSend={chats.sendToMuse}
                 onBack={pop}
                 onTalk={() => setTalking(true)}
-                onOpenToday={() => goTab("today")}
               />
             )}
             {screen.kind === "settings" && (
@@ -220,8 +263,9 @@ export function MainApp({
                 onChange={setSettings}
                 nearbyOn={nearbyOn}
                 onNearby={setNearbyOn}
+                plus={plus}
+                onPlus={() => setUpsell("date")}
                 onBack={pop}
-                onOpenMuse={() => push({ kind: "muse" })}
                 onLogOut={onLogOut}
                 onReplay={onReplay}
               />
@@ -238,25 +282,29 @@ export function MainApp({
             <MuseFlow
               account={account}
               profile={profile}
-              continueLabel="Save to my profile"
+              continueLabel="Save"
               onDone={(s, a) => {
                 setSummary(s);
                 setAnswers((prev) => ({ ...prev, ...a }));
                 setTalking(false);
-                notify({ title: `${muse.name} updated your profile`, body: "Tomorrow's introduction will use what you just shared.", muse: true });
+                notify({ title: "Profile updated", body: "Tomorrow's introduction will use it.", muse: true });
               }}
             />
             <button
               type="button"
+              aria-label="Close"
               onClick={() => setTalking(false)}
-              className="pt-safe absolute right-4 top-0 z-10 mt-2 rounded-full bg-white/10 px-4 py-[7px] text-[14px] font-semibold backdrop-blur-xl"
+              className="absolute right-4 z-10 flex h-[44px] w-[44px] items-center justify-center rounded-full bg-white/10 backdrop-blur-xl"
+              style={{ top: "calc(var(--safe-top) + 4px)" }}
             >
-              Close
+              <CloseIcon size={15} />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
+      <HostSheet open={hosting} onCreate={host} onClose={() => setHosting(false)} />
+      <PlusSheet feature={upsell} onSubscribe={subscribe} onClose={() => setUpsell(null)} />
       <BannerHost banner={banner} onDismiss={dismissBanner} />
     </motion.div>
   );
@@ -273,6 +321,7 @@ export function MainApp({
         myName={myName}
         onBack={pop}
         onOpenProfile={() => push({ kind: "person", personId: thread.personId })}
+        onPlanDate={() => gate("date", () => chats.startPlan(thread.id))}
       />
     );
   }
@@ -280,36 +329,31 @@ export function MainApp({
   function personScreen(personId: string) {
     const person = PEOPLE[personId];
     const thread = chats.threads.find((t) => t.personId === personId);
-    const canSayHi = !thread && personId !== TODAYS_PICK.id;
     return (
       <>
         <ProfileBook
           person={person}
-          muse={muse}
           variant="view"
-          bottomSpace={canSayHi || thread ? "120px" : "40px"}
+          bottomSpace="120px"
           topLeft={<BackButton onPress={pop} />}
-          label={
-            <span className="rounded-full bg-black/40 px-3 py-[6px] text-[13px] font-semibold backdrop-blur-md">
-              {personId === TODAYS_PICK.id ? "Today's introduction" : `From ${thread?.origin ?? "Nearby"}`}
-            </span>
-          }
+          label={<span />}
         />
-        {(canSayHi || thread) && (
-          <div className="pb-safe absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[#0A0810] via-[#0A0810]/90 to-transparent px-5 pt-8">
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.97 }}
-              onClick={() => (thread ? openThread(personId) : sayHiNearby(person, `Hi ${person.name}! Your profile made me smile.`))}
-              className="flex h-[56px] w-full items-center justify-center gap-2 rounded-full bg-white text-[17px] font-semibold text-black"
-            >
-              <HeartIcon size={16} color="#FF3F6E" />
-              {thread ? `Message ${person.name}` : `Say hi to ${person.name}`}
-            </motion.button>
-          </div>
-        )}
+        <div className="pb-safe absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-[#0A0810] via-[#0A0810]/90 to-transparent px-5 pt-8">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              if (thread) return openThread(personId);
+              if (personId === pick.id) setDecisions((d) => ({ ...d, [pick.id]: "interested" }));
+              sayHi(person, person.nearby ? "Nearby" : "Today");
+            }}
+            className="flex h-[56px] w-full items-center justify-center gap-2 rounded-full bg-white text-[17px] font-semibold text-black"
+          >
+            <ChatBubbleIcon size={17} />
+            {thread ? "Open chat" : "Say hi"}
+          </motion.button>
+        </div>
       </>
     );
   }
 }
-

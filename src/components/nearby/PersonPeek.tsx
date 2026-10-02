@@ -40,14 +40,11 @@ export function PersonPeek({
                   <span className="font-light text-white/85">{person.age}</span>
                   {person.verified && <ShieldCheckIcon size={18} />}
                 </div>
-                <div className="text-[13px] text-white/65">
-                  {person.neighborhood} &middot; {person.distance}
-                </div>
+                <div className="text-[14px] text-white/65">{person.neighborhood}</div>
               </div>
             </div>
             <div className="px-4 pb-4 pt-2">
-              <span className="inline-block rounded-full bg-white/10 px-3 py-[4px] text-[13px] font-medium">Up for: {person.nearby?.upFor}</span>
-              <p className="mt-2 text-[15px] leading-[21px] text-white/80">&ldquo;{person.nearby?.line}&rdquo;</p>
+              <p className="text-[16px] leading-[22px] text-white/85">&ldquo;{person.nearby?.line}&rdquo;</p>
             </div>
           </motion.div>
 
@@ -59,8 +56,7 @@ export function PersonPeek({
             transition={{ delay: 0.05, type: "spring", stiffness: 420, damping: 30 }}
           >
             <MenuRow label="Say hi" icon={<ChatBubbleIcon size={16} />} onPress={onSayHi} />
-            <MenuRow label="Read full profile" icon={<BookIcon size={18} />} onPress={onFullProfile} />
-            <MenuRow label="Not for me" onPress={onClose} danger />
+            <MenuRow label="Full story" icon={<BookIcon size={18} />} onPress={onFullProfile} />
           </motion.div>
         </motion.div>
       )}
@@ -68,12 +64,12 @@ export function PersonPeek({
   );
 }
 
-function MenuRow({ label, icon, onPress, danger = false }: { label: string; icon?: React.ReactNode; onPress: () => void; danger?: boolean }) {
+function MenuRow({ label, icon, onPress }: { label: string; icon?: React.ReactNode; onPress: () => void }) {
   return (
     <button
       type="button"
       onClick={onPress}
-      className={`flex w-full items-center justify-between border-b border-white/[0.08] px-4 py-[12px] text-left text-[16px] last:border-b-0 active:bg-white/10 ${danger ? "text-[#FF6961]" : ""}`}
+      className="flex h-[52px] w-full items-center justify-between border-b border-white/[0.08] px-4 text-left text-[17px] last:border-b-0 active:bg-white/10"
     >
       {label}
       {icon}
@@ -94,7 +90,7 @@ export function StatusPill({ person, className = "" }: { person: Person; classNa
     return (
       <span className={`flex items-center gap-[6px] rounded-full bg-[#34C759] px-[10px] py-[4px] text-[12px] font-semibold text-white ${className}`}>
         <ChatBubbleIcon size={11} />
-        Up for a chat now
+        Up for a chat
       </span>
     );
   if (person.nearby?.freeTonight)

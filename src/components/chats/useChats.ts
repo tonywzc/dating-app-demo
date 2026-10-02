@@ -60,14 +60,14 @@ type Plan = { when?: string; what?: string; budget?: string; venue?: Venue };
 function museReply(text: string) {
   const t = text.toLowerCase();
   if (/why|maya|today/.test(t))
-    return "Maya and you were raised the same way: big family tables, love shown through food. She wants something real at an easy pace, and she's hoping for someone calm who remembers the little things. That's you.";
+    return "You share a lot: big family dinners, cooking for friends, weekend hikes. And you both want something serious.";
   if (/open|say|first message|write/.test(t))
-    return "Try asking about her first pot on the wheel. She still drinks from it every morning, and it's the kind of question that gets a real story.";
+    return "Ask about something in her story, like her first pot on the wheel.";
   if (/date|plan|book/.test(t))
-    return "Happy to. Once it's mutual, tap Plan a date in your chat and I'll ask you both a few things, then book it and add it to your calendar.";
+    return "Tap the calendar in any mutual chat. I'll ask you both, then book it.";
   if (/nearby|tonight|event/.test(t))
-    return "Natural wine night in Hayes Valley is tonight at 7, and Elena will be there. She already said she'd like to chat.";
-  return "Got it. I'll keep that in mind for tomorrow's introduction.";
+    return "Natural wine night in Hayes Valley, 7 PM. Check Nearby.";
+  return "Got it. I'll keep that in mind.";
 }
 
 export function useChats({
@@ -183,8 +183,10 @@ export function useChats({
     (tid: string, text: string) => {
       const thread = threadsRef.current.find((t) => t.id === tid);
       if (!thread) return;
-      if (thread.status === "likesYou") becomeMutual(tid, "You matched · Just now");
+      if (thread.status === "likesYou") becomeMutual(tid, "You matched");
       push(tid, { id: msgId(), from: "me", kind: "text", text });
+      // Before it's mutual, your first message waits for them.
+      if (thread.status === "youLiked") return;
       const reply = nextReply(thread.personId);
       if (reply) theySay(tid, reply);
     },
@@ -200,35 +202,26 @@ export function useChats({
   );
 
   /** Accept someone's interest. */
-  const matchBack = useCallback((tid: string) => becomeMutual(tid, "You matched · Just now"), [becomeMutual]);
+  const matchBack = useCallback((tid: string) => becomeMutual(tid, "You matched"), [becomeMutual]);
 
   const remove = useCallback((tid: string) => setThreads((list) => list.filter((t) => t.id !== tid)), []);
 
-  /** Say you'd like to meet someone, with an optional note. Today's introduction answers after a moment. */
+  /** One tap: say you'd like to meet someone. The chat exists right away; Today's introduction answers after a moment. */
   const expressInterest = useCallback(
-    ({ personId, origin, note, about, viaMuse, onMutual }: { personId: string; origin: Origin; note: string; about?: string; viaMuse?: boolean; onMutual?: () => void }) => {
+    ({ personId, origin, onMutual }: { personId: string; origin: Origin; onMutual?: () => void }) => {
       const person = PEOPLE[personId];
-      const first: Message = { id: msgId(), from: "me", kind: "note", text: note, about, muse: viaMuse };
-      const tid = ensure(personId, origin, "youLiked", first);
-      const instant = person.nearby?.status === "chat" || person.nearby?.status === "interested";
-      if (instant) {
-        // They were already open to chatting, so it's mutual right away.
-        becomeMutual(tid, "You matched · Just now");
-        const reply = nextReply(personId);
-        if (reply) theySay(tid, reply);
+      const tid = ensure(personId, origin, "youLiked", { id: msgId(), kind: "divider", text: `You'd like to meet ${person.name}` });
+      // People already open to chatting on Nearby match right away.
+      if (person.nearby?.status === "chat" || person.nearby?.status === "interested") {
+        becomeMutual(tid, "You matched");
         return tid;
       }
       if (origin === "Today") {
         setTimeout(() => {
-          becomeMutual(tid, "It's mutual · Just now");
+          becomeMutual(tid, "It's mutual");
           const reply = nextReply(personId);
           if (reply) theySay(tid, reply, 1800);
-          notifyRef.current({
-            title: "It's mutual",
-            body: `${person.name} would like to meet you too. Say hi!`,
-            avatar: person.avatar,
-            onOpen: onMutual,
-          });
+          notifyRef.current({ title: "It's mutual", body: `${person.name} would like to meet you too.`, avatar: person.avatar, onOpen: onMutual });
         }, MUTUAL_DELAY);
       }
       return tid;
@@ -242,14 +235,14 @@ export function useChats({
     (tid: string, step: "when" | "what" | "budget" | "calendar", delay: number) => {
       const them = personOf(tid).name;
       const spec = {
-        when: { question: `When are you free this week? Pick all that work. I'm asking ${them} too.`, options: WHEN_OPTIONS, multi: true },
+        when: { question: `When are you free? I'm asking ${them} too.`, options: WHEN_OPTIONS, multi: true },
         what: { question: "What kind of date sounds good?", options: WHAT_OPTIONS },
         budget: { question: "Any budget in mind?", options: BUDGET_OPTIONS },
-        calendar: { question: `Which calendar should I add it to, ${myName}? I'll remember for next time.`, options: CALENDARS },
+        calendar: { question: "Add it to which calendar?", options: CALENDARS },
       }[step];
       setTimeout(() => push(tid, { id: msgId(), kind: "museAsk", step, ...spec }), delay);
     },
-    [myName, push],
+    [push],
   );
 
   const startPlan = useCallback(
@@ -257,8 +250,8 @@ export function useChats({
       const them = personOf(tid).name;
       plans.current[tid] = {};
       patch(tid, (t) => ({ ...t, planning: true }));
-      push(tid, { id: msgId(), kind: "divider", text: "Muse joined to help you plan" });
-      museSays(tid, `Hi ${myName} and ${them}! Let's find you two a great first date. A few quick questions for you both, then I'll handle the booking.`, 300);
+      push(tid, { id: msgId(), kind: "divider", text: "Muse joined to plan" });
+      museSays(tid, `Hi ${myName} and ${them}! Three quick questions, then I'll book it.`, 300);
       ask(tid, "when", 1500);
     },
     [ask, museSays, myName, patch, push],
@@ -268,7 +261,6 @@ export function useChats({
     (tid: string) => {
       const plan = plans.current[tid];
       const venue = plan.venue!;
-      const them = personOf(tid).name;
       const bookingId = msgId();
       push(tid, { id: bookingId, kind: "museBooking", venue, done: false });
       setTimeout(() => {
@@ -277,12 +269,12 @@ export function useChats({
         const code = `TW-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         const cal = calendarRef.current ?? CALENDARS[0];
         push(tid, { id: msgId(), kind: "museBooked", booking: { venue, when, code, calendar: cal } });
-        museSays(tid, `You're all set. I'll send you both a reminder ${dayName(plan.when!)} afternoon. Have the best time, ${myName} and ${them}.`, 900);
+        museSays(tid, `All set. I'll remind you both ${dayName(plan.when!)} afternoon.`, 900);
         setTimeout(() => patch(tid, (t) => ({ ...t, planning: false })), 900);
         notifyRef.current({ title: "Date booked", body: `${venue.name} · ${when}. Added to ${cal.split(" · ")[0]}.`, muse: true });
       }, BOOKING_MS);
     },
-    [museSays, myName, patch, patchMessage, push],
+    [museSays, patch, patchMessage, push],
   );
 
   const answer = useCallback(
@@ -325,7 +317,7 @@ export function useChats({
           ask(tid, "budget", 1100);
         } else if (step === "budget") {
           update({ budget: mine[0] });
-          museSays(tid, `Noted: ${mine[0] === "No preference" ? "any budget" : mine[0]}, and vegetarian-friendly for ${them}. Here are three I think you'll both love. Tap your pick, ${them} is choosing too.`, 300);
+          museSays(tid, `Three spots you'd both like. Tap your pick.`, 300);
           setTimeout(() => push(tid, { id: msgId(), kind: "museVenues", venues: VENUES[plans.current[tid]?.what ?? "Dinner"] ?? VENUES.Dinner }), 1700);
         }
       }, ANSWER_DELAY);

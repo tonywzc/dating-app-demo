@@ -9,7 +9,6 @@ import { MuseAvatar } from "@/components/muse/MuseAvatar";
 import { HeartIcon } from "@/components/photos/StoryScan";
 import { TopFade } from "@/components/ui/TopFade";
 import { Photo } from "@/components/ui/Photo";
-import { SparkleIcon } from "@/components/ui/icons";
 
 type Filter = "all" | Interest;
 
@@ -27,7 +26,7 @@ export function preview(m: Message | undefined, name: string): string {
     case "text":
       return m.from === "me" ? `You: ${m.text}` : m.text;
     case "note":
-      return m.from === "me" ? `Your note: ${m.text}` : m.text;
+      return m.text;
     case "media":
       return `${m.from === "me" ? "You sent" : `${name} sent`} ${m.media.length > 1 ? `${m.media.length} items` : m.media[0].kind === "video" ? "a video" : "a photo"}`;
     case "divider":
@@ -36,7 +35,7 @@ export function preview(m: Message | undefined, name: string): string {
     case "museAsk":
     case "museVenues":
     case "museBooking":
-      return "Muse is planning your date…";
+      return "Planning a date…";
     case "museBooked":
       return `Booked: ${m.booking.venue.name} · ${m.booking.when}`;
   }
@@ -65,26 +64,6 @@ export function ChatsTab({
       <div className="no-scrollbar pt-safe relative h-full overflow-y-auto" style={{ paddingBottom: `calc(${TAB_BAR_SPACE} + 24px)` }}>
         <h1 className="px-5 pt-2 text-[34px] font-bold tracking-[-0.03em]">Chats</h1>
 
-        {/* Muse, always first */}
-        <motion.button
-          type="button"
-          onClick={onOpenMuse}
-          whileTap={{ scale: 0.98 }}
-          className="mx-4 mt-3 flex w-[calc(100%-32px)] items-center gap-3 rounded-[24px] border border-white/10 p-3 text-left"
-          style={{ background: "linear-gradient(120deg, rgba(255,95,134,0.16), rgba(106,75,255,0.14))" }}
-        >
-          <MuseAvatar muse={muse} size={52} mood="idle" />
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center gap-2">
-              <span className="text-[17px] font-semibold">{muse.name}</span>
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-[1px] text-[11px] font-semibold text-white/75">
-                <SparkleIcon size={9} /> Your matchmaker
-              </span>
-            </span>
-            <span className="mt-[2px] line-clamp-2 block text-[14px] leading-[19px] text-white/65">{museLast}</span>
-          </span>
-        </motion.button>
-
         {/* Filters */}
         <div className="no-scrollbar mt-5 flex gap-2 overflow-x-auto px-4">
           {FILTERS.map((f) => {
@@ -95,7 +74,7 @@ export function ChatsTab({
                 type="button"
                 aria-pressed={on}
                 onClick={() => setFilter(f.id)}
-                className={`flex shrink-0 items-center gap-[6px] rounded-full px-[14px] py-[7px] text-[14px] font-medium transition-colors ${
+                className={`flex h-[40px] shrink-0 items-center gap-[6px] rounded-full px-4 text-[15px] font-medium transition-colors ${
                   on ? "bg-white text-black" : "bg-white/[0.08] text-white/80"
                 }`}
               >
@@ -107,6 +86,15 @@ export function ChatsTab({
         </div>
 
         <div className="mt-3">
+          {filter === "all" && (
+            <motion.button type="button" onClick={onOpenMuse} whileTap={{ backgroundColor: "rgba(255,255,255,0.05)" }} className="flex w-full items-center gap-3 px-4 py-[10px] text-left">
+              <MuseAvatar muse={muse} size={59} mood="idle" />
+              <span className="min-w-0 flex-1 border-b border-white/[0.07] pb-[12px] pt-[2px]">
+                <span className="block text-[17px] font-semibold">{muse.name}</span>
+                <span className="mt-[2px] block truncate text-[15px] text-white/50">{museLast}</span>
+              </span>
+            </motion.button>
+          )}
           {shown.map((t) => (
             <Row key={t.id} thread={t} onPress={() => onOpen(t.id)} />
           ))}
@@ -116,8 +104,6 @@ export function ChatsTab({
     </div>
   );
 }
-
-const STATUS_LABEL: Record<Interest, string> = { mutual: "Mutual", likesYou: "Into you", youLiked: "Waiting" };
 
 function Row({ thread, onPress }: { thread: Thread; onPress: () => void }) {
   const p = PEOPLE[thread.personId];
@@ -149,22 +135,14 @@ function Row({ thread, onPress }: { thread: Thread; onPress: () => void }) {
       <span className="min-w-0 flex-1 border-b border-white/[0.07] pb-[10px] pt-[2px]">
         <span className="flex items-center gap-2">
           <span className={`truncate text-[17px] ${unread ? "font-bold" : "font-semibold"}`}>{p.name}</span>
-          <span
-            className={`shrink-0 rounded-full px-[7px] py-[1px] text-[11px] font-semibold ${
-              thread.status === "mutual" ? "bg-[#34C759]/15 text-[#5BE07F]" : thread.status === "likesYou" ? "bg-[#FF3F6E]/20 text-[#FF8AA2]" : "bg-white/10 text-white/55"
-            }`}
-          >
-            {STATUS_LABEL[thread.status]}
-          </span>
           <span className="ml-auto shrink-0 text-[13px] text-white/40">{thread.time}</span>
         </span>
         <span className="mt-[2px] flex items-center gap-2">
-          <span className={`line-clamp-2 flex-1 text-[14px] leading-[19px] ${unread ? "text-white/90" : "text-white/50"}`}>
+          <span className={`line-clamp-1 flex-1 text-[15px] leading-[20px] ${unread ? "text-white/90" : "text-white/50"}`}>
             {thread.typing ? <em className="not-italic text-[#FF8AA2]">typing…</em> : preview(last, p.name)}
           </span>
           {unread && <span className="h-[10px] w-[10px] shrink-0 rounded-full bg-[#FF3F6E]" />}
         </span>
-        <span className="mt-[3px] block text-[11px] text-white/35">From {thread.origin}</span>
       </span>
     </motion.button>
   );

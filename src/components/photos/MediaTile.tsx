@@ -39,8 +39,9 @@ export function MediaTile({
       ) : (
         <motion.img
           src={media.src}
-          alt={media.caption ?? ""}
+          alt=""
           draggable={false}
+          onError={(e) => (e.currentTarget.style.opacity = "0")}
           className="absolute inset-0 h-full w-full object-cover"
           animate={video && !media.video && playing ? { scale: [1.04, 1.16], x: ["-2%", "3%"] } : { scale: 1, x: 0 }}
           transition={video && !media.video && playing ? { duration: 7, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" } : { duration: 0.3 }}

@@ -11,8 +11,18 @@ const face = (id: string) => `https://images.unsplash.com/photo-${id}?w=160&h=16
 
 const scene = (id: string, caption: string): Media => ({ id: `u-${id}`, src: unsplash(id, 540, 960), kind: "photo", source: "instagram", caption });
 
-export type Quote = { q: string; a: string };
 export type Fact = { label: string; value: string };
+
+/** One chapter of someone's story. Chapters run in order: where they're from, how they grew up, what changed them, their life now. */
+export type StoryChapter = {
+  id: string;
+  title: string;
+  headline: string;
+  text: string;
+  photo?: string;
+  moments?: Media[];
+  tags?: string[];
+};
 
 /** How someone can show up on Nearby. */
 export type NearbyStatus = "interested" | "chat" | "none";
@@ -21,9 +31,9 @@ export type NearbyInfo = {
   x: number;
   y: number;
   status: NearbyStatus;
-  /** What they're up for right now, in their words. */
+  /** What they're up for right now. */
   upFor: string;
-  /** A short line for the peek and the succinct profile. */
+  /** A short line in their words. */
   line: string;
   freeTonight?: boolean;
 };
@@ -35,26 +45,21 @@ export type Person = {
   photo: string;
   avatar: string;
   neighborhood: string;
-  distance: string;
   verified?: boolean;
-  /** Muse's one-line read on them. */
+  /** One line about them. */
   essence: string;
-  /** Why Muse thinks you two fit: a short paragraph, written to you. */
+  /** Why we introduced you: short, factual, in the platform's voice. */
   why: string;
-  /** What you have in common, as chips under the why. */
+  /** What you share, as chips under the why. */
   overlaps: string[];
-  moments: Media[];
+  story: StoryChapter[];
   interests: string[];
-  quotes: Quote[];
-  roots: { story: string; photo?: string };
   lookingFor: string;
   hopingToMeet: string[];
   facts: Fact[];
   lifestyle: Fact[];
-  /** Gentle differences, framed as things worth talking about. */
-  worthTalkingAbout: string[];
-  firstDate: string;
-  opener: string;
+  /** First-message suggestions shown in a new chat. */
+  openers: string[];
   nearby?: NearbyInfo;
 };
 
@@ -65,72 +70,163 @@ const MAYA: Person = {
   photo: unsplash("1494790108377-be9c29b29330", 900, 1200),
   avatar: face("1494790108377-be9c29b29330"),
   neighborhood: "Inner Sunset",
-  distance: "4 km away",
   verified: true,
-  essence: "A designer who throws pots on weekends, runs Lands End before work, and still calls her grandmother every Sunday.",
-  why:
-    "You both learned love at a crowded family table, and you both show it by feeding people. She wants something real, at an easy pace, like you. And she's looking for someone calm who remembers the little things. That's you, word for word.",
-  overlaps: ["Sunday family dinners", "Cooks for friends", "Weekend trails", "Something serious, no rush"],
-  moments: [
-    scene("1464278533981-50106e6176b1", "Up before the fog lifts"),
-    scene("1452587925148-ce544e77e70d", "Shooting a roll of film a month"),
-    scene("1504674900247-0877df9cc836", "Dinner for my sisters"),
-    scene("1506905925346-21bda4d32df4", "Eastern Sierra, last fall"),
+  essence: "Designer, potter, early riser. Still calls her grandmother every Sunday.",
+  why: "You both grew up around a crowded family table, and you both still cook for the people you love. And you're both looking for something serious, at an easy pace.",
+  overlaps: ["Big family dinners", "Cooks for friends", "Weekend hikes", "Something serious"],
+  story: [
+    {
+      id: "roots",
+      title: "Roots",
+      headline: "Portland, the oldest of four",
+      text: "Maya grew up in a narrow house in Southeast Portland, the oldest of four. Her grandmother lived with them and ran the kitchen. Dinner was the one thing nobody missed.",
+      photo: unsplash("1517457373958-b7bdd4587205", 900, 700),
+    },
+    {
+      id: "growing",
+      title: "Growing up",
+      headline: "Rain, forests and a darkroom",
+      text: "Weekends were hikes in the Columbia Gorge with her dad. At fourteen she found her school's darkroom and practically lived there. She still shoots a roll of film every month.",
+      photo: unsplash("1470071459604-3b5ec3a7fe05", 900, 700),
+    },
+    {
+      id: "turning",
+      title: "Turning points",
+      headline: "Art school, then a leap",
+      text: "She went to RISD on a scholarship, the first in her family to study art. After graduating she moved to San Francisco with two suitcases and no job, and talked her way into a small design studio.",
+      photo: unsplash("1449034446853-66c86144b0ad", 900, 700),
+    },
+    {
+      id: "now",
+      title: "Now",
+      headline: "Designer, potter, early riser",
+      text: "Six years on, she leads design at that same studio. She runs Lands End before work, throws pots on weekends, and fosters a cat named Miso.",
+      moments: [
+        scene("1464278533981-50106e6176b1", "Up before the fog lifts"),
+        scene("1513364776144-60967b0f800f", "Saturdays at the studio"),
+        scene("1504674900247-0877df9cc836", "Dinner for my sisters"),
+        scene("1506905925346-21bda4d32df4", "Eastern Sierra, last fall"),
+      ],
+      tags: ["Ceramics", "Trail running", "Film photography", "Cooking", "Jazz"],
+    },
   ],
-  interests: ["Ceramics", "Trail running", "Film photography", "Cooking", "Bookstores", "Jazz"],
-  quotes: [
-    {
-      q: "What would your closest friends say they love most about you?",
-      a: "That I show up. If you're moving, I'm there with tape and snacks. If you're sad, I'm there with soup.",
-    },
-    {
-      q: "What does a perfect Sunday look like?",
-      a: "A slow run at Lands End, the farmers market, and a long dinner with way too many people around one table.",
-    },
-    {
-      q: "When do you feel most at ease with someone?",
-      a: "When we can be quiet together and it doesn't feel like a gap. Also when they're kind to waiters.",
-    },
-  ],
-  roots: {
-    story:
-      "I grew up in Portland, the oldest of four. My grandmother ran the house, and dinner was the one thing nobody missed. She taught me that you can say almost anything to someone if you're cooking together.",
-    photo: unsplash("1517457373958-b7bdd4587205", 900, 700),
-  },
+  interests: ["Ceramics", "Trail running", "Film photography", "Cooking", "Jazz"],
   lookingFor: "Something serious, no rush",
-  hopingToMeet: ["Steady and warm", "Close to their family", "Curious about the world", "Has their own thing going"],
+  hopingToMeet: ["Steady and warm", "Close to family", "Curious", "Has their own thing"],
   facts: [
-    { label: "Work", value: "Product designer at a small studio" },
+    { label: "Work", value: "Design lead" },
     { label: "Education", value: "RISD" },
     { label: "Hometown", value: "Portland, OR" },
     { label: "Height", value: "5′6″" },
     { label: "Languages", value: "English, Mandarin" },
   ],
   lifestyle: [
-    { label: "Kids", value: "Wants them someday" },
+    { label: "Kids", value: "Someday" },
     { label: "Drinks", value: "Socially" },
     { label: "Smokes", value: "No" },
-    { label: "Pets", value: "Fostering a cat named Miso" },
   ],
-  worthTalkingAbout: [
-    "She's up at 6 for her run. You're more of a late-dinner person. Could make for great breakfasts.",
-    "She's never made fresh pasta. You've made it four times this month.",
+  openers: [
+    "What was the first thing you ever made on the wheel?",
+    "Lands End before work? Respect. What's your route?",
+    "Okay, film camera. What are you shooting on?",
   ],
-  firstDate: "A pasta-making class for two, then a walk through the Mission.",
-  opener: "Okay, I have to ask: what was the first thing you ever made on the wheel, and do you still have it?",
 };
 
-type Seed = Pick<Person, "id" | "name" | "age" | "neighborhood" | "distance"> & {
+const NADIA: Person = {
+  id: "nadia",
+  name: "Nadia",
+  age: 30,
+  photo: unsplash("1508214751196-bcfd4ca60f91", 900, 1200),
+  avatar: face("1508214751196-bcfd4ca60f91"),
+  neighborhood: "Noe Valley",
+  verified: true,
+  essence: "History teacher, Sunday host, midfielder.",
+  why: "You both grew up with family at the center of everything, and you both host the people you love. She's looking for something serious too.",
+  overlaps: ["Family first", "Hosts Sunday dinners", "Loves a good story", "Something serious"],
+  story: [
+    {
+      id: "roots",
+      title: "Roots",
+      headline: "Beirut, then Sacramento",
+      text: "Nadia was born in Beirut and moved to Sacramento at eight, when her parents opened a small Lebanese restaurant. She did her homework at the counter between lunch and dinner.",
+      photo: unsplash("1414235077428-338989a2e8c0", 900, 700),
+    },
+    {
+      id: "growing",
+      title: "Growing up",
+      headline: "The kid with the history books",
+      text: "She translated for her parents, read every history book in the school library, and played soccer with her cousins every weekend.",
+      photo: unsplash("1481627834876-b7833e8f5570", 900, 700),
+    },
+    {
+      id: "turning",
+      title: "Turning points",
+      headline: "First to college, then the classroom",
+      text: "The first in her family to go to college, she studied history at UC Davis, then started teaching in Oakland. One class of tenth graders made it her life's work.",
+      photo: unsplash("1503676260728-1c00da094a0b", 900, 700),
+    },
+    {
+      id: "now",
+      title: "Now",
+      headline: "Teacher, host, midfielder",
+      text: "She teaches history in the city, plays in a Tuesday night league, and hosts a long mezze lunch most Sundays.",
+      moments: [scene("1504674900247-0877df9cc836", "Sunday mezze"), scene("1507525428034-b723cf961d3e", "Summer at the coast")],
+      tags: ["History", "Soccer", "Hosting", "Podcasts"],
+    },
+  ],
+  interests: ["History", "Soccer", "Hosting", "Podcasts"],
+  lookingFor: "Finding my person",
+  hopingToMeet: ["Kind", "Family-minded", "Good listener"],
+  facts: [
+    { label: "Work", value: "History teacher" },
+    { label: "Education", value: "UC Davis" },
+    { label: "Hometown", value: "Sacramento, CA" },
+    { label: "Languages", value: "English, Arabic, French" },
+  ],
+  lifestyle: [
+    { label: "Kids", value: "Wants them" },
+    { label: "Drinks", value: "Rarely" },
+  ],
+  openers: ["What's your favorite period of history to teach?", "Mezze Sundays? I'll bring dessert.", "What position do you play?"],
+};
+
+const IRIS_STORY: StoryChapter[] = [
+  {
+    id: "roots",
+    title: "Roots",
+    headline: "Monterey tide pools",
+    text: "Iris grew up a few blocks from the water in Monterey. Her mom worked at the aquarium, so most afternoons ended in the tide pools.",
+    photo: unsplash("1507525428034-b723cf961d3e", 900, 700),
+  },
+  {
+    id: "turning",
+    title: "Turning points",
+    headline: "Hawaii, and a life underwater",
+    text: "She did her PhD in Hawaii studying coral, learned to free-dive, and came home knowing she'd never work far from the ocean.",
+    photo: unsplash("1501785888041-af3ef285b470", 900, 700),
+  },
+  {
+    id: "now",
+    title: "Now",
+    headline: "Kelp forests and cold surf",
+    text: "She studies kelp forests at the Academy of Sciences and surfs Ocean Beach before work, fog or not.",
+    tags: ["Surfing", "Ocean", "Photography"],
+  },
+];
+
+type Seed = Pick<Person, "id" | "name" | "age" | "neighborhood"> & {
   photoId: string;
   essence: string;
   interests: string[];
   lookingFor: string;
   nearby?: NearbyInfo;
   work: string;
+  story?: StoryChapter[];
 };
 
-/** Everyone else gets a lighter profile built from a few lines. Their full profile reuses Maya's chapter layout. */
+/** Everyone else gets a lighter profile built from a few lines, in the same chapter layout. */
 function person(s: Seed): Person {
+  const up = s.nearby?.upFor.toLowerCase();
   return {
     id: s.id,
     name: s.name,
@@ -138,22 +234,17 @@ function person(s: Seed): Person {
     photo: unsplash(s.photoId, 900, 1200),
     avatar: face(s.photoId),
     neighborhood: s.neighborhood,
-    distance: s.distance,
     verified: true,
     essence: s.essence,
-    why: `${s.name} and you share a love of ${s.interests[0].toLowerCase()} and ${s.interests[1].toLowerCase()}, and you're both after something that feels easy.`,
+    why: `You both love ${s.interests[0].toLowerCase()} and ${s.interests[1].toLowerCase()}, and you're both after something that feels easy.`,
     overlaps: s.interests.slice(0, 3),
-    moments: [],
+    story: s.story ?? [{ id: "now", title: "Now", headline: s.essence, text: s.nearby?.line ?? "", tags: s.interests }],
     interests: s.interests,
-    quotes: [{ q: "What are you up for these days?", a: s.nearby?.line ?? s.essence }],
-    roots: { story: "" },
     lookingFor: s.lookingFor,
     hopingToMeet: [],
     facts: [{ label: "Work", value: s.work }],
     lifestyle: [],
-    worthTalkingAbout: [],
-    firstDate: "",
-    opener: "",
+    openers: up ? [`Hi ${s.name}! ${up.charAt(0).toUpperCase()}${up.slice(1)} sounds fun.`, `Hey ${s.name}, what are you up to this week?`] : [`Hi ${s.name}!`],
     nearby: s.nearby,
   };
 }
@@ -164,7 +255,6 @@ const SOFIA = person({
   age: 30,
   photoId: "1438761681033-6461ffad8d80",
   neighborhood: "Noe Valley",
-  distance: "2 km away",
   essence: "Pediatric nurse, salsa on Thursdays, makes a mean arepa.",
   interests: ["Salsa", "Cooking", "Hiking"],
   lookingFor: "Finding my person",
@@ -177,7 +267,6 @@ const HANA = person({
   age: 28,
   photoId: "1534528741775-53994a69daeb",
   neighborhood: "Noe Valley",
-  distance: "2 km away",
   essence: "Architect who sketches buildings on napkins and never says no to hot pot.",
   interests: ["Architecture", "Hot pot", "Live music"],
   lookingFor: "Something serious, no rush",
@@ -191,7 +280,6 @@ const ELENA = person({
   age: 31,
   photoId: "1544005313-94ddf0286df2",
   neighborhood: "Hayes Valley",
-  distance: "1 km away",
   essence: "Sommelier with strong opinions about orange wine and weak ones about everything else.",
   interests: ["Natural wine", "Vinyl", "Dancing"],
   lookingFor: "Seeing where it goes",
@@ -205,7 +293,6 @@ const CHLOE = person({
   age: 27,
   photoId: "1517841905240-472988babdf9",
   neighborhood: "Lower Pac Heights",
-  distance: "1.5 km away",
   essence: "Climbs, bakes sourdough, and is always planning the next road trip.",
   interests: ["Climbing", "Sourdough", "Road trips"],
   lookingFor: "Something serious, no rush",
@@ -219,7 +306,6 @@ const PRIYA = person({
   age: 30,
   photoId: "1580489944761-15a19d654956",
   neighborhood: "Mission Dolores",
-  distance: "800 m away",
   essence: "Startup founder who unwinds with pottery and very long walks.",
   interests: ["Pottery", "Long walks", "Tacos"],
   lookingFor: "Seeing where it goes",
@@ -234,7 +320,6 @@ const NEARBY_ONLY: Person[] = [
     age: 26,
     photoId: "1487412720507-e7ab37603c6f",
     neighborhood: "Mission",
-    distance: "600 m away",
     essence: "Tattoo artist, taco critic, karaoke closer.",
     interests: ["Karaoke", "Tacos", "Art"],
     lookingFor: "Seeing where it goes",
@@ -247,7 +332,6 @@ const NEARBY_ONLY: Person[] = [
     age: 29,
     photoId: "1529626455594-4ff0802cfb7e",
     neighborhood: "Castro",
-    distance: "900 m away",
     essence: "Yoga teacher who's secretly very competitive at board games.",
     interests: ["Yoga", "Board games", "Brunch"],
     lookingFor: "Seeing where it goes",
@@ -260,7 +344,6 @@ const NEARBY_ONLY: Person[] = [
     age: 28,
     photoId: "1573496359142-b8d87734a5a2",
     neighborhood: "SoMa",
-    distance: "2 km away",
     essence: "Product lead by day, DJ by very late night.",
     interests: ["DJing", "Techno", "Running"],
     lookingFor: "Seeing where it goes",
@@ -273,7 +356,6 @@ const NEARBY_ONLY: Person[] = [
     age: 30,
     photoId: "1524504388940-b1c1722653e1",
     neighborhood: "Marina",
-    distance: "3 km away",
     essence: "Sails on weekends, reads on ferries, laughs loudly.",
     interests: ["Sailing", "Books", "Live music"],
     lookingFor: "Something serious, no rush",
@@ -286,7 +368,6 @@ const NEARBY_ONLY: Person[] = [
     age: 27,
     photoId: "1488426862026-3ee34a7d66df",
     neighborhood: "North Beach",
-    distance: "3 km away",
     essence: "Pastry chef. Will judge your croissant.",
     interests: ["Baking", "Jazz", "Cycling"],
     lookingFor: "Seeing where it goes",
@@ -299,11 +380,11 @@ const NEARBY_ONLY: Person[] = [
     age: 31,
     photoId: "1550525811-e5869dd03032",
     neighborhood: "Inner Sunset",
-    distance: "4 km away",
     essence: "Marine biologist with a soft spot for foggy beaches.",
     interests: ["Surfing", "Ocean", "Photography"],
     lookingFor: "Something serious, no rush",
     work: "Marine biologist",
+    story: IRIS_STORY,
     nearby: { x: 566, y: 712, status: "none", upFor: "Ocean Beach bonfire", line: "Bonfire Friday. Bring a sweater." },
   }),
 ];
@@ -311,8 +392,11 @@ const NEARBY_ONLY: Person[] = [
 export const TODAYS_PICK = MAYA;
 
 export const PEOPLE: Record<string, Person> = Object.fromEntries(
-  [MAYA, SOFIA, HANA, ELENA, CHLOE, PRIYA, ...NEARBY_ONLY].map((p) => [p.id, p]),
+  [MAYA, NADIA, SOFIA, HANA, ELENA, CHLOE, PRIYA, ...NEARBY_ONLY].map((p) => [p.id, p]),
 );
+
+/** Today's introduction first, then the extra ones "See another" brings (Twine Plus). */
+export const TODAY_PICKS: Person[] = [MAYA, NADIA, PEOPLE.iris];
 
 /** People who show up on the Nearby map. */
 export const NEARBY_PEOPLE: Person[] = Object.values(PEOPLE).filter((p) => p.nearby);
@@ -336,7 +420,17 @@ export type NearbyEvent = {
   y: number;
   /** Faces of people you might know there. */
   faces?: string[];
+  /** You're the host. */
+  hosting?: boolean;
 };
+
+/** What you can host on Nearby (Twine Plus). */
+export const HOST_KINDS = [
+  { id: "dinner", label: "Dinner party", photo: unsplash("1517457373958-b7bdd4587205", 600, 400) },
+  { id: "drinks", label: "Drinks", photo: unsplash("1514933651103-005eec06c04b", 600, 400) },
+  { id: "games", label: "Game night", photo: unsplash("1610890716171-6b1bb98ffd09", 600, 400) },
+  { id: "hike", label: "Hike", photo: unsplash("1506905925346-21bda4d32df4", 600, 400) },
+] as const;
 
 export const NEARBY_EVENTS: NearbyEvent[] = [
   {
@@ -430,8 +524,8 @@ export type PlanStep = "when" | "what" | "budget" | "calendar";
 export type Message =
   | { id: string; from: "me" | "them"; kind: "text"; text: string }
   | { id: string; from: "me" | "them"; kind: "media"; media: Media[] }
-  /** An interest note, optionally replying to part of a profile. */
-  | { id: string; from: "me" | "them"; kind: "note"; text: string; about?: string; muse?: boolean }
+  /** Their first note, sent with their interest. */
+  | { id: string; from: "them"; kind: "note"; text: string }
   | { id: string; kind: "divider"; text: string }
   | { id: string; kind: "muse"; text: string }
   | {
@@ -477,7 +571,7 @@ export const SEED_THREADS: Thread[] = [
     time: "9:12 AM",
     order: 90,
     messages: [
-      { id: "s0", from: "them", kind: "note", text: "Your grandma's broth story got me. Mine made arepas every Sunday.", about: "What shaped Tony" },
+      { id: "s0", from: "them", kind: "note", text: "Your grandma's broth story got me. Mine made arepas every Sunday." },
       { id: "s1", kind: "divider", text: "You matched · Last Tuesday" },
       { id: "s2", from: "me", kind: "text", text: "Okay, I need to try a real arepa. Where do I even start in this city?" },
       { id: "s3", from: "them", kind: "text", text: "Honestly? My kitchen. But there's a decent spot on 24th if you need a warm-up." },
@@ -504,7 +598,7 @@ export const SEED_THREADS: Thread[] = [
     unread: 1,
     time: "Yesterday",
     order: 70,
-    messages: [{ id: "h0", from: "them", kind: "note", text: "Round four of pasta night? Teach me. I'll bring dessert.", about: "Pasta night, round four" }],
+    messages: [{ id: "h0", from: "them", kind: "note", text: "Round four of pasta night? Teach me. I'll bring dessert." }],
   },
   {
     id: "t-priya",
@@ -529,14 +623,14 @@ export const SEED_THREADS: Thread[] = [
     unread: 0,
     time: "Sun",
     order: 50,
-    messages: [{ id: "c0", from: "me", kind: "note", text: "Fellow sourdough person! How old is your starter?" }],
+    messages: [{ id: "c0", from: "me", kind: "text", text: "Fellow sourdough person! How old is your starter?" }],
   },
 ];
 
 /** Canned replies, so chats feel alive. Each person answers your next few messages in order. */
 export const REPLIES: Record<string, string[]> = {
   maya: [
-    "Hi! Muse told me about the pasta. I'm going to need proof.",
+    "Hi! I hear you make fresh pasta. I'm going to need proof.",
     "Okay, deal. And my first pot was a very lopsided mug. I still drink from it every morning.",
     "Ha, I'd love that. Want Muse to find us a time?",
   ],
@@ -582,6 +676,6 @@ export const VENUES: Record<string, Venue[]> = {
 // ---------- Your past introductions ----------
 
 export const PAST_INTROS = [
-  { personId: "sofia", day: "Last Tue", outcome: "It's mutual" },
-  { personId: "hana", day: "Last Mon", outcome: "She's interested" },
+  { personId: "sofia", day: "Tue", outcome: "Mutual" },
+  { personId: "hana", day: "Mon", outcome: "Into you" },
 ];

@@ -202,3 +202,81 @@ export function YouTabIcon({ active, size = 26 }: { active: boolean; size?: numb
     </svg>
   );
 }
+
+export function PartyIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M4 20l4.5-12.5 8 8z" />
+      <path d="M14 4.5c.8.8.8 2 0 2.8M18.5 9.5c.8-.8 2-.8 2.8 0M17 3v1.5M20.5 6.5H19M12 9l3 3" />
+    </svg>
+  );
+}
+
+export function PeopleIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c.6-3.6 3.2-5.8 6.5-5.8s5.9 2.2 6.5 5.8" />
+      <path d="M16 4.8a3.5 3.5 0 010 6.4M18.5 14.6c1.7.8 2.8 2.6 3 5.4" />
+    </svg>
+  );
+}
+
+export function HeartIconLine({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.3a4.3 4.3 0 017.5 2.5C19.5 15.4 12 20 12 20z" />
+    </svg>
+  );
+}
+
+export function BellIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15zM10 20.5a2 2 0 004 0" />
+    </svg>
+  );
+}
+
+export function LockIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="3" />
+      <path d="M8 10.5V7.5a4 4 0 018 0v3" />
+    </svg>
+  );
+}
+
+export function HelpIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.7-2.5 2-2.5 3.5M12 17h.01" />
+    </svg>
+  );
+}
+
+export function ReplayIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M4 12a8 8 0 108-8 8 8 0 00-5.7 2.3L4 8.5M4 4v4.5h4.5" />
+    </svg>
+  );
+}
+
+export function LogoutIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M14 4h3.5A2.5 2.5 0 0120 6.5v11a2.5 2.5 0 01-2.5 2.5H14M10 16l-4-4 4-4M6 12h10" />
+    </svg>
+  );
+}
+
+export function EyeIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}

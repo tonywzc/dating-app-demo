@@ -2,37 +2,41 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { BRAND } from "@/lib/brand";
 import { ageFrom } from "@/lib/format";
-import { BEATS, type Answers, type Summary } from "@/lib/muse-script";
-import type { Person } from "@/lib/app-data";
-import { ARCHIVE_STORIES, CAMERA_ROLL_MEDIA, PROFILE_PHOTO, type Muse } from "@/lib/mock-data";
+import type { Answers, Summary } from "@/lib/muse-script";
+import type { Person, StoryChapter } from "@/lib/app-data";
+import { ARCHIVE_STORIES, CAMERA_ROLL_MEDIA, PROFILE_PHOTO, TOP_STORIES, type Muse } from "@/lib/mock-data";
 import { PushScreen, BackButton } from "@/components/app/PushScreen";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
-import { MuseAvatar } from "@/components/muse/MuseAvatar";
 import { MediaTile } from "@/components/photos/MediaTile";
 import { PhotoPicker } from "@/components/photos/PhotoPicker";
 import { toMoment, type Moment } from "@/components/photos/StoriesPick";
 import { Group, Row, type Field } from "@/components/profile/AboutYou";
 import { EditFieldSheet, type EditTarget } from "@/components/profile/EditFieldSheet";
 import { ProfileBook } from "@/components/today/ProfileBook";
-import { Toggle } from "@/components/ui/Toggle";
 import { TopFade } from "@/components/ui/TopFade";
 import { Photo } from "@/components/ui/Photo";
-import { CloseIcon, GearIcon, PlusIcon, ShieldCheckIcon } from "@/components/ui/icons";
+import { CloseIcon, EyeIcon, GearIcon, MicIcon, PlusIcon, ShieldCheckIcon } from "@/components/ui/icons";
 
 /** Everything on your public profile that you can edit. */
 export type Me = { fields: Field[]; interests: string[]; moments: Moment[] };
 
 const field = (fields: Field[], id: string) => fields.find((f) => f.id === id)?.value ?? "";
 
-// Answers from the Muse conversation that read well as quotes on your profile.
-const QUOTE_BEATS = ["weekend", "loved", "ease"];
-
 /** You, in the same book layout others see in Today. */
 export function selfAsPerson(me: Me, summary: Summary, answers: Answers): Person {
   const birthday = field(me.fields, "birthday");
   const section = (title: string) => summary.sections.find((s) => s.title === title)?.items ?? [];
+  const story: StoryChapter[] = [];
+  if (answers.roots) story.push({ id: "roots", title: "Roots", headline: "Sunday dinners at grandma's", text: answers.roots, photo: TOP_STORIES[3].src });
+  story.push({
+    id: "now",
+    title: "Now",
+    headline: section("Your world")[0] ?? "Life lately",
+    text: answers.lately ?? "",
+    moments: me.moments.map((m) => ({ ...m.media, caption: m.title })),
+    tags: me.interests,
+  });
   return {
     id: "me",
     name: field(me.fields, "name"),
@@ -40,25 +44,17 @@ export function selfAsPerson(me: Me, summary: Summary, answers: Answers): Person
     photo: PROFILE_PHOTO,
     avatar: PROFILE_PHOTO,
     neighborhood: field(me.fields, "location").split(",")[0],
-    distance: "",
     verified: true,
     essence: summary.essence,
     why: "",
     overlaps: [],
-    moments: me.moments.map((m) => ({ ...m.media, caption: m.title })),
+    story,
     interests: me.interests,
-    quotes: QUOTE_BEATS.filter((id) => answers[id]).map((id) => {
-      const beat = BEATS.find((b) => b.id === id)!;
-      return { q: beat.muse[beat.muse.length - 1].replace(/^.*?([A-Z][^.!]*\?)$/, "$1"), a: answers[id] };
-    }),
-    roots: { story: answers.roots ?? "" },
     lookingFor: field(me.fields, "looking"),
     hopingToMeet: section("You're hoping to meet"),
     facts: ["work", "school", "languages"].map((id) => ({ label: me.fields.find((f) => f.id === id)!.label, value: field(me.fields, id) })).filter((f) => f.value),
     lifestyle: [],
-    worthTalkingAbout: [],
-    firstDate: "",
-    opener: "",
+    openers: [],
   };
 }
 
@@ -69,8 +65,6 @@ export function YouTab({
   muse,
   summary,
   answers,
-  nearbyOn,
-  onNearby,
   onOpenSettings,
   onTalkToMuse,
 }: {
@@ -79,8 +73,6 @@ export function YouTab({
   muse: Muse;
   summary: Summary;
   answers: Answers;
-  nearbyOn: boolean;
-  onNearby: (on: boolean) => void;
   onOpenSettings: () => void;
   onTalkToMuse: () => void;
 }) {
@@ -116,18 +108,19 @@ export function YouTab({
           <div className="flex items-center gap-2">
             <motion.button
               type="button"
-              whileTap={{ scale: 0.95 }}
+              aria-label="Preview"
+              whileTap={{ scale: 0.92 }}
               onClick={() => setPreview(true)}
-              className="h-[36px] rounded-full bg-white/10 px-4 text-[14px] font-semibold"
+              className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-white/10"
             >
-              Preview
+              <EyeIcon size={21} />
             </motion.button>
             <motion.button
               type="button"
               aria-label="Settings"
               whileTap={{ scale: 0.92 }}
               onClick={onOpenSettings}
-              className="flex h-[36px] w-[36px] items-center justify-center rounded-full bg-white/10"
+              className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-white/10"
             >
               <GearIcon size={19} />
             </motion.button>
@@ -148,12 +141,6 @@ export function YouTab({
               {self.age ? `, ${self.age}` : ""}
             </div>
             <div className="text-[14px] text-white/55">{field(me.fields, "location")}</div>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="h-[5px] w-[110px] overflow-hidden rounded-full bg-white/10">
-                <div className="h-full w-[86%] rounded-full" style={{ background: `linear-gradient(90deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }} />
-              </div>
-              <span className="text-[12px] text-white/50">Profile 86% done</span>
-            </div>
           </div>
         </div>
 
@@ -161,7 +148,6 @@ export function YouTab({
         <section className="mt-6">
           <div className="flex items-baseline justify-between px-3 pb-2">
             <h2 className="text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">Photos & moments</h2>
-            <span className="text-[12px] text-white/40">Tap × to remove</span>
           </div>
           <div className="grid grid-cols-3 gap-[6px]">
             <div className="relative aspect-[3/4] overflow-hidden rounded-[16px]">
@@ -184,9 +170,11 @@ export function YouTab({
                     type="button"
                     aria-label={`Remove ${m.title}`}
                     onClick={() => onChange({ ...me, moments: me.moments.filter((x) => x.media.id !== m.media.id) })}
-                    className="absolute right-[6px] top-[6px] flex h-[24px] w-[24px] items-center justify-center rounded-full bg-black/55 backdrop-blur"
+                    className="absolute right-0 top-0 flex h-[44px] w-[44px] items-center justify-center"
                   >
-                    <CloseIcon size={10} strokeWidth={3} />
+                    <span className="flex h-[26px] w-[26px] items-center justify-center rounded-full bg-black/55 backdrop-blur">
+                      <CloseIcon size={10} strokeWidth={3} />
+                    </span>
                   </button>
                 </motion.div>
               ))}
@@ -203,15 +191,20 @@ export function YouTab({
           </div>
         </section>
 
-        {/* Muse's take */}
+        {/* In short */}
         <section className="mt-6">
-          <h2 className="px-3 pb-2 text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">{muse.name}&apos;s take on you</h2>
-          <div className="rounded-[22px] border border-white/[0.07] bg-white/[0.04] p-4">
-            <p className="text-[16px] leading-[23px] text-white/85">&ldquo;{summary.essence}&rdquo;</p>
-            <button type="button" onClick={onTalkToMuse} className="mt-3 flex items-center gap-2 rounded-full bg-white/10 py-[5px] pl-[5px] pr-3 text-[14px] font-semibold active:bg-white/20">
-              <MuseAvatar muse={muse} size={22} mood="idle" />
-              Talk to {muse.name} to update it
-            </button>
+          <h2 className="px-3 pb-2 text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">In short</h2>
+          <div className="flex items-start gap-3 rounded-[22px] border border-white/[0.07] bg-white/[0.04] p-4">
+            <p className="flex-1 text-[16px] leading-[23px] text-white/85">{summary.essence}</p>
+            <motion.button
+              type="button"
+              aria-label={`Update with ${muse.name}`}
+              whileTap={{ scale: 0.92 }}
+              onClick={onTalkToMuse}
+              className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-white/10"
+            >
+              <MicIcon size={20} />
+            </motion.button>
           </div>
         </section>
 
@@ -264,29 +257,13 @@ export function YouTab({
           </div>
         </Group>
 
-        <Group title="Where you show up">
-          <div className="flex items-center gap-3 border-b border-white/[0.07] px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[16px]">Today</div>
-              <div className="text-[13px] text-white/45">Muse introduces you to one person a day</div>
-            </div>
-            <span className="text-[15px] text-[#5BE07F]">On</span>
-          </div>
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="min-w-0 flex-1">
-              <div className="text-[16px]">Nearby</div>
-              <div className="text-[13px] text-white/45">{nearbyOn ? "Visible around Duboce Triangle" : "Off. Nobody sees you on the map."}</div>
-            </div>
-            <Toggle on={nearbyOn} label="Show me on Nearby" onChange={onNearby} />
-          </div>
-        </Group>
       </div>
 
       <EditFieldSheet target={editing} onSave={save} onClose={() => setEditing(null)} />
       <PhotoPicker
         open={adding}
         title="Add moments"
-        source={<>Camera roll and story archive &middot; Muse titles these for you</>}
+        source={<>Camera roll &amp; stories</>}
         items={[...ARCHIVE_STORIES, ...CAMERA_ROLL_MEDIA].filter((m) => !added.has(m.id))}
         limit={4}
         onClose={() => setAdding(false)}
@@ -301,11 +278,10 @@ export function YouTab({
           <PushScreen key="preview" background="#0A0810">
             <ProfileBook
               person={self}
-              muse={muse}
               variant="self"
               bottomSpace="48px"
               topLeft={<BackButton onPress={() => setPreview(false)} />}
-              label={<span className="rounded-full bg-black/40 px-3 py-[6px] text-[13px] font-semibold backdrop-blur-md">How you appear in Today</span>}
+              label={<span className="rounded-full bg-black/40 px-4 py-[8px] text-[15px] font-semibold backdrop-blur-md">Preview</span>}
             />
           </PushScreen>
         )}

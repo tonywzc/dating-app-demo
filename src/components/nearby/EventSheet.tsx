@@ -49,22 +49,17 @@ export function EventSheet({ event, going, onRsvp, onClose }: { event: NearbyEve
                   <Photo key={f} src={f} className="h-[28px] w-[28px] rounded-full ring-2 ring-[#1C1B22]" />
                 ))}
               </div>
-              <span className="text-[13px] text-white/55">
-                {e.faces.length === 1 ? "Someone" : `${e.faces.length} people`} you&apos;ve seen on Nearby {e.faces.length === 1 ? "is" : "are"} going
-              </span>
+              <span className="text-[14px] text-white/55">going</span>
             </div>
           )}
           <div className="mt-5">
             {going ? (
               <div className="flex h-[54px] items-center justify-center gap-2 rounded-full bg-[#34C759]/15 text-[17px] font-semibold text-[#5BE07F]">
-                <CheckIcon size={16} /> {blind ? "Your seat is saved" : "You're going"}
+                <CheckIcon size={16} /> {e.hosting ? "You're hosting" : blind ? "Seat saved" : "You're going"}
               </div>
             ) : (
               <Button onClick={onRsvp}>{blind ? "Save my seat" : "I'm going"}</Button>
             )}
-            <p className="mt-2 text-center text-[12px] text-white/40">
-              {blind ? "Muse tells you who you're meeting the night before." : "We'll add it to your calendar."}
-            </p>
           </div>
         </div>
       )}

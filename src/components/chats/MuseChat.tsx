@@ -8,12 +8,11 @@ import type { Person } from "@/lib/app-data";
 import type { Muse } from "@/lib/mock-data";
 import { BackButton } from "@/components/app/PushScreen";
 import { MuseAvatar } from "@/components/muse/MuseAvatar";
-import { Photo } from "@/components/ui/Photo";
 import { ChevronRight, MicIcon, SendIcon } from "@/components/ui/icons";
 import { MuseBubble } from "./PlanMessages";
 import type { MuseLine } from "./useChats";
 
-const prompts = (name: string) => [`Why ${name}?`, "Help me write an opener", "What's on tonight?", "How do you plan a date?"];
+const prompts = (name: string) => [`Why ${name}?`, "What's on tonight?", "Plan a date"];
 
 /** Your chat with Muse: what Muse knows about you up top, and everything you've said to each other below. */
 export function MuseChat({
@@ -27,7 +26,6 @@ export function MuseChat({
   onSend,
   onBack,
   onTalk,
-  onOpenToday,
 }: {
   muse: Muse;
   myName: string;
@@ -39,7 +37,6 @@ export function MuseChat({
   onSend: (text: string) => void;
   onBack: () => void;
   onTalk: () => void;
-  onOpenToday: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -88,7 +85,7 @@ export function MuseChat({
           <MuseAvatar muse={muse} size={38} mood={typing ? "thinking" : "idle"} />
           <div className="min-w-0 flex-1">
             <div className="text-[17px] font-semibold leading-[20px]">{muse.name}</div>
-            <div className="text-[12px] text-white/50">{typing ? "Thinking…" : "Your matchmaker"}</div>
+            
           </div>
           <motion.button
             type="button"
@@ -110,7 +107,7 @@ export function MuseChat({
             <motion.div layout className="rounded-[21px] bg-[#15121C]">
               <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-start gap-3 p-4 text-left">
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[12px] font-semibold uppercase tracking-[0.07em] text-white/50">Who you are, to {muse.name}</span>
+                  <span className="block text-[12px] font-semibold uppercase tracking-[0.07em] text-white/50">About you</span>
                   <span className={`mt-1 block text-[15px] leading-[21px] text-white/90 ${open ? "" : "line-clamp-2"}`}>{summary.essence}</span>
                 </span>
                 <motion.span animate={{ rotate: open ? 90 : 0 }} className="mt-[22px] text-white/45">
@@ -139,12 +136,6 @@ export function MuseChat({
                           </div>
                         </div>
                       ))}
-                      <p className="text-[13px] leading-[18px] text-white/50">
-                        About {summary.fitPeople.toLocaleString()} people nearby could be a great fit. Only you can see this.
-                      </p>
-                      <button type="button" onClick={onTalk} className="flex items-center gap-1 text-[14px] font-semibold text-[#FF8AA2]">
-                        Something&apos;s off? Tell {muse.name} <ChevronRight size={11} />
-                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -161,24 +152,7 @@ export function MuseChat({
           <Line key={l.id} line={l} muse={muse} />
         ))}
 
-        <div className="py-1 text-center text-[12px] font-medium text-white/40">Today · 9:00 AM</div>
-        <MuseBubble muse={muse}>Good morning, {myName}. I spent the night reading everyone nearby. Today I&apos;d like you to meet {pick.name}.</MuseBubble>
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.98 }}
-          onClick={onOpenToday}
-          className="ml-9 flex w-[calc(100%-60px)] items-center gap-3 overflow-hidden rounded-[20px] border border-white/10 bg-white/[0.05] p-2 pr-3 text-left"
-        >
-          <Photo src={pick.avatar} initial={pick.name[0]} className="h-[56px] w-[56px] rounded-[14px]" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-semibold">
-              {pick.name}, {pick.age}
-            </span>
-            <span className="block truncate text-[13px] text-white/55">{pick.overlaps.slice(0, 2).join(" · ")}</span>
-          </span>
-          <span className="text-[13px] font-semibold text-[#FF8AA2]">Read</span>
-        </motion.button>
-
+        <div className="py-1 text-center text-[12px] font-medium text-white/40">Today</div>
         {log.map((l) => (
           <Line key={l.id} line={l} muse={muse} />
         ))}

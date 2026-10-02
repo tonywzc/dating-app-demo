@@ -78,7 +78,7 @@ export function CameraCapture({ to, onSend, onClose }: { to: string; onSend: (me
           <span className="w-[40px]" />
         </div>
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/45 px-3 py-[4px] text-[13px] font-medium backdrop-blur">
-          {shot ? `Send to ${to}?` : `Sending to ${to}`}
+          To {to}
         </div>
       </div>
 
@@ -108,10 +108,7 @@ export function CameraCapture({ to, onSend, onClose }: { to: string; onSend: (me
               ))}
             </div>
             <div className="flex w-full items-center justify-between px-10 pb-5">
-              <span className="h-[46px] w-[46px] overflow-hidden rounded-[10px] border-2 border-white/80">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={CAMERA_ROLL_MEDIA[0].src} alt="" className="h-full w-full object-cover" />
-              </span>
+              <span className="w-[46px]" aria-hidden />
               <motion.button
                 type="button"
                 aria-label={mode === "photo" ? "Take photo" : recording ? "Stop recording" : "Record video"}

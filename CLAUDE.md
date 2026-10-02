@@ -1,5 +1,17 @@
 @AGENTS.md
 
+## Design principles (keep for every iteration)
+
+- Clean, modern, calm. When in doubt, remove: fewer elements, fewer options, fewer words on every screen.
+- Iconography over copy. Short labels (1–3 words); no explanatory sub-lines unless they prevent a mistake.
+- Big, easy targets: every tappable thing is at least 44pt; no tiny text links or mini buttons.
+- Easy navigation: one obvious primary action per screen; settings live in sub-pages, not as a wall of toggles.
+- The matchmaker voice is the platform ("we", warm and factual: shared roots, values, plans), not the AI.
+  Muse is a helper you can talk to; keep her out of "you two are a fit" claims.
+- No distances between people; neighborhood only.
+- Twine Plus ($9.99/mo): Plan a date, Host an event, and +3 extra introductions a week (10 vs 7).
+  Plan a date and Host an event are free the first time; the second use (and See another) shows the upsell.
+
 ## Publishing the demo
 
 The shareable demo lives at https://tonywzc.github.io/dating-app-demo/ and redeploys on every push to `main`
