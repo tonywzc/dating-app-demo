@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { MY_AREA, PEOPLE, TODAY_PICKS, type NearbyEvent, type Person } from "@/lib/app-data";
-import { DEFAULT_MUSE, PROFILE_PREFILL, type Account } from "@/lib/mock-data";
+import { DEFAULT_MUSE, PROFILE_PREFILL, TOP_STORIES, type Account } from "@/lib/mock-data";
 import type { Answers, Summary } from "@/lib/muse-script";
 import { ChatThread } from "@/components/chats/ChatThread";
 import { ChatsTab } from "@/components/chats/ChatsTab";
@@ -47,6 +47,11 @@ function initialMe(profile: ProfileBasics, answers: Answers, moments: Moment[]):
     ],
     interests: PROFILE_PREFILL.interests,
     moments,
+    story: [
+      { id: "background", title: "Background", text: "Grew up in a big, loud family. Sunday dinners at grandma's were the center of everything.", photo: TOP_STORIES[3].src },
+      { id: "work", title: "Work & education", text: "Works in product at Meta. Studied at UC Berkeley." },
+      { id: "now", title: "Life now", text: `Lives in ${profile.location.split(",")[0]}. Hikes in Marin on weekends and makes fresh pasta for friends.` },
+    ],
   };
 }
 
@@ -90,8 +95,8 @@ export function MainApp({
 
   // Twine Plus. Plan a date and Host an event are free once.
   const [plus, setPlus] = useState(false);
-  const [upsell, setUpsell] = useState<PlusFeature | null>(null);
-  const [uses, setUses] = useState({ date: 0, event: 0 });
+  const [upsell, setUpsell] = useState<{ feature: PlusFeature; demo: boolean; run?: () => void } | null>(null);
+  const [uses, setUses] = useState<Record<PlusFeature, number>>({ date: 0, event: 0, more: 0 });
   const [extrasLeft, setExtrasLeft] = useState(PLUS_EXTRAS);
 
   const notify = useCallback((b: Omit<Banner, "id">) => setBanner({ ...b, id: String(Date.now()) }), []);
@@ -119,11 +124,18 @@ export function MainApp({
 
   const openThread = (personId: string) => push({ kind: "thread", tid: threadIdFor(personId) });
 
-  /** Use a Plus feature: free the first time, then Plus only. */
-  const gate = (feature: "date" | "event", run: () => void) => {
-    if (!plus && uses[feature] >= 1) return setUpsell(feature);
-    setUses((u) => ({ ...u, [feature]: u[feature] + 1 }));
-    run();
+  /** Use a Plus feature: the first try says it's Plus but lets you in (demo mode); after that, the upsell. */
+  const gate = (feature: PlusFeature, run: () => void) => {
+    if (plus) return run();
+    if (uses[feature] >= 1) return setUpsell({ feature, demo: false });
+    setUpsell({
+      feature,
+      demo: true,
+      run: () => {
+        setUses((u) => ({ ...u, [feature]: u[feature] + 1 }));
+        run();
+      },
+    });
   };
 
   const pick = TODAY_PICKS[pickIndex];
@@ -132,8 +144,7 @@ export function MainApp({
   const chatting = useMemo(() => new Set(chats.threads.map((t) => t.personId)), [chats.threads]);
   const museLast = chats.museLog.length ? chats.museLog[chats.museLog.length - 1].text : `Morning, ${myName}. Ask me anything.`;
 
-  const seeAnother = () => {
-    if (!plus) return setUpsell("more");
+  const nextPick = () => {
     if (extrasLeft === 0 || pickIndex >= TODAY_PICKS.length - 1) {
       notify({ title: "That's everyone for today", body: "More tomorrow at 9.", muse: true });
       return;
@@ -141,6 +152,7 @@ export function MainApp({
     setExtrasLeft((n) => n - 1);
     setPickIndex((i) => i + 1);
   };
+  const seeAnother = () => gate("more", nextPick);
 
   const sayHi = (p: Person, origin: "Today" | "Nearby") => {
     chats.expressInterest({ personId: p.id, origin, onMutual: () => openThread(p.id) });
@@ -173,15 +185,9 @@ export function MainApp({
   };
 
   const subscribe = () => {
-    const feature = upsell;
     setUpsell(null);
     setPlus(true);
     notify({ title: "Welcome to Plus", body: "Dates, events and 3 more people a week.", muse: true });
-    if (feature === "more") setTimeout(() => {
-      setExtrasLeft((n) => n - 1);
-      setPickIndex((i) => Math.min(i + 1, TODAY_PICKS.length - 1));
-    }, 400);
-    if (feature === "event") setTimeout(() => setHosting(true), 400);
   };
 
   return (
@@ -233,7 +239,6 @@ export function MainApp({
             onChange={setMe}
             muse={muse}
             summary={summary}
-            answers={answers}
             onOpenSettings={() => push({ kind: "settings" })}
             onTalkToMuse={() => setTalking(true)}
           />
@@ -269,7 +274,7 @@ export function MainApp({
                 nearbyOn={nearbyOn}
                 onNearby={setNearbyOn}
                 plus={plus}
-                onPlus={() => setUpsell("date")}
+                onPlus={() => setUpsell({ feature: "date", demo: false })}
                 onBack={pop}
                 onLogOut={onLogOut}
                 onReplay={onReplay}
@@ -309,7 +314,17 @@ export function MainApp({
       </AnimatePresence>
 
       <HostSheet open={hosting} onCreate={host} onClose={() => setHosting(false)} />
-      <PlusSheet feature={upsell} onSubscribe={subscribe} onClose={() => setUpsell(null)} />
+      <PlusSheet
+        feature={upsell?.feature ?? null}
+        demo={upsell?.demo}
+        onSubscribe={subscribe}
+        onTry={() => {
+          const run = upsell?.run;
+          setUpsell(null);
+          if (run) setTimeout(run, 350);
+        }}
+        onClose={() => setUpsell(null)}
+      />
       <BannerHost banner={banner} onDismiss={dismissBanner} />
     </motion.div>
   );

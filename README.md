@@ -31,11 +31,11 @@ npm run dev -- -p 3100
 | Muse's summary | Structured card of who you are and who you're hoping to meet, plus a city-level map of San Francisco and a quiet estimate of how many people nearby could be a great fit for you. "Tell Muse more" goes back to the conversation. |
 | Your best moments | Muse scans the Instagram Story archive and brings back the most-loved expired Stories (real video included), each with a title Muse wrote, editable in place. Add more from the camera roll or the archive, or skip. |
 | Profile preview | "Here's how people will see you": main photo, Muse's take, stories with their titles. |
-| **Today** (tab) | One introduction a day, told like a short book: why we introduced you, then their story from the roots up (Roots, Growing up, Turning points, Now), Looking for, The details. Swipe or use arrow keys. A distance filter (top right) sets how far introductions come from; profiles never show distance. Pass asks why with one-tap reasons. One tap on "I'd like to meet" opens the chat; Maya says yes after a few seconds. After deciding: countdown to the next one and **See another** (Plus). |
-| **Nearby** (tab) | Opt-in. Draggable map of San Francisco, neighborhood-level, no distances. Ring + heart = into you; green = up for a chat. Hold a face to peek; tap for a short profile; Say hi opens the chat. **+** hosts an event (Plus). |
-| **Chats** (tab) | Filters: All, Into you, You're into, Mutual. New chats show suggested first messages as faint bubbles: tap to send. Composer: camera and + on the right (+ = photos & videos, Plan a date). **Plan a date** (Plus): Muse asks you both, books it, adds it to your calendar. |
-| **You** (tab) | Editable public profile, Preview (eye) shows you as others see you; Settings (gear) is a short icon list with sub-pages. |
-| **Twine Plus** | $9.99/month: Plan a date, Host an event, +3 introductions a week (10 vs 7). Plan a date and Host an event are free once; the second time, and See another, show the upsell. No payment step in the demo. |
+| **Introductions** (tab) | The matchmaker. One person a day, as a short brief you swipe through: why we introduced you, Background, Work & education, Life now (with their Instagram stories), Looking for, The details and "Ask them about". Distance filter (miles) top right. "Start a conversation" opens the chat with one tap; pass asks why. After deciding: countdown plus See another (Plus). |
+| **Nearby** (tab) | Opt-in map, neighborhood-level. Filters: All, Into you, Active now, Twine events, Blind dates. Twine-hosted events and blind dates sit in a tray you can hide. Hold a face to peek; tap to say hi. **+** hosts your own event (Plus). |
+| **Chats** (tab) | Filters: All, Mutual, Into you, You're into. **Sort** lets Muse triage the inbox into Reply, Worth a look, Waiting on them and Gone quiet, with a one-line hint per chat. New chats show one-tap first-message suggestions. Composer: + (photos, camera), text, and **Plan a date** (Plus). |
+| **You** (tab) | Edit everything others see, including your story (text and a photo per chapter) and your photos and stories. Eye = preview, gear = settings. |
+| **Twine Plus** | $9.99/month: Plan a date, Host an event, +3 introductions a week (10 vs 7). The first try of each is free "because you're in demo mode :)"; after that, the upsell. No payment step. |
 
 ## Where things live
 

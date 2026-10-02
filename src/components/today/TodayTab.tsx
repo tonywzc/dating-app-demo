@@ -6,7 +6,6 @@ import { BRAND } from "@/lib/brand";
 import { PAST_INTROS, PEOPLE, type Person } from "@/lib/app-data";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
 import { HeartIcon } from "@/components/photos/StoryScan";
-import { Button } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
 import { BookIcon, ChatBubbleIcon, CloseIcon, PeopleIcon, ReplayIcon, SlidersIcon } from "@/components/ui/icons";
 import { DistanceSheet } from "./DistanceSheet";
@@ -106,7 +105,7 @@ export function TodayTab({
               person={person}
               variant="today"
               bottomSpace={`calc(${TAB_BAR_SPACE} + 110px)`}
-              label={<span className="rounded-full bg-black/40 px-4 py-[8px] text-[15px] font-semibold backdrop-blur-md">Today</span>}
+              label={<span className="rounded-full bg-black/40 px-4 py-[10px] text-[15px] font-semibold backdrop-blur-md">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
               topRight={filterButton}
             />
 
@@ -131,8 +130,8 @@ export function TodayTab({
                   boxShadow: "0 12px 34px -8px rgba(201,75,216,0.75)",
                 }}
               >
-                <HeartIcon size={18} color="#fff" />
-                I&apos;d like to meet {person.name}
+                <ChatBubbleIcon size={18} />
+                Start a conversation with {person.name}
               </motion.button>
             </div>
           </motion.div>
@@ -188,7 +187,7 @@ function AfterDecision({
       />
       <div className="no-scrollbar pt-safe relative h-full overflow-y-auto px-5" style={{ paddingBottom: `calc(${TAB_BAR_SPACE} + 24px)` }}>
         <div className="flex items-center justify-between pt-3">
-          <h1 className="text-[34px] font-bold tracking-[-0.03em]">Today</h1>
+          <h1 className="text-[32px] font-bold tracking-[-0.03em]">Introductions</h1>
           {filterButton}
         </div>
 
@@ -217,34 +216,45 @@ function AfterDecision({
           <Action icon={<BookIcon size={20} />} label="Story" onPress={onReadAgain} />
         </div>
 
-        {/* Next introduction */}
-        <div className="mt-6 flex items-center justify-between rounded-[22px] border border-white/[0.08] bg-white/[0.04] px-5 py-4">
-          <span className="text-[16px] text-white/70">Next introduction</span>
-          <span className="text-[20px] font-semibold tabular-nums">{left}</span>
-        </div>
-
-        <div className="mt-3">
-          <Button variant="ghost" onClick={onSeeAnother}>
-            <span className="flex items-center justify-center gap-2">
-              <PeopleIcon size={20} />
-              See another
-              <span className="rounded-full px-2 py-[2px] text-[12px] font-bold" style={{ background: `linear-gradient(100deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}>
-                {plus ? `${extrasLeft} left` : "PLUS"}
-              </span>
+        {/* Next introduction, or see another now */}
+        <div className="mt-6 flex items-center gap-3 rounded-[22px] border border-white/[0.08] bg-white/[0.04] py-2 pl-5 pr-2">
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] text-white/50">Next in</div>
+            <div className="text-[19px] font-semibold tabular-nums">{left}</div>
+          </div>
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.96 }}
+            onClick={onSeeAnother}
+            className="flex h-[52px] items-center gap-2 rounded-full bg-white/10 pl-4 pr-3 text-[16px] font-semibold"
+          >
+            <PeopleIcon size={19} />
+            See another
+            <span className="rounded-full px-2 py-[2px] text-[11px] font-bold" style={{ background: `linear-gradient(100deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}>
+              {plus ? extrasLeft : "PLUS"}
             </span>
-          </Button>
+          </motion.button>
         </div>
 
         {/* Past introductions */}
-        <div className="mt-8 px-1 text-[13px] font-medium uppercase tracking-[0.06em] text-white/45">Earlier</div>
+        <div className="mt-8 px-1 text-[13px] font-medium uppercase tracking-[0.06em] text-white/45">Earlier this week</div>
         <div className="mt-3 flex gap-5 px-1">
           {PAST_INTROS.map((intro) => {
             const p = PEOPLE[intro.personId];
             return (
-              <div key={p.id} className="flex w-[64px] flex-col items-center text-center">
-                <Photo src={p.avatar} initial={p.name[0]} className="h-[60px] w-[60px] rounded-full" />
-                <span className="mt-2 text-[14px] font-semibold">{p.name}</span>
-                <span className="text-[12px] text-white/45">{intro.outcome}</span>
+              <div key={p.id} className="flex w-[72px] flex-col items-center text-center">
+                <span className="relative">
+                  <Photo src={p.avatar} initial={p.name[0]} className="h-[64px] w-[64px] rounded-full" />
+                  <span
+                    className={`absolute -bottom-[2px] -right-[2px] flex h-[24px] w-[24px] items-center justify-center rounded-full ring-[3px] ring-[#0A0810] ${
+                      intro.outcome === "Mutual" ? "bg-[#34C759] text-white" : "bg-[#FF3F6E]"
+                    }`}
+                  >
+                    {intro.outcome === "Mutual" ? <ChatBubbleIcon size={12} /> : <HeartIcon size={12} color="#fff" />}
+                  </span>
+                </span>
+                <span className="mt-2 text-[15px] font-semibold">{p.name}</span>
+                <span className={`text-[12px] font-medium ${intro.outcome === "Mutual" ? "text-[#5BE07F]" : "text-[#FF8AA2]"}`}>{intro.outcome}</span>
               </div>
             );
           })}

@@ -8,9 +8,11 @@
 - Easy navigation: one obvious primary action per screen; settings live in sub-pages, not as a wall of toggles.
 - The matchmaker voice is the platform ("we", warm and factual: shared roots, values, plans), not the AI.
   Muse is a helper you can talk to; keep her out of "you two are a fit" claims.
-- No distances between people; neighborhood only.
+- No distances between people; neighborhood only. Distance filters use miles.
+- Profiles read like a matchmaker's brief (background, work & education, life now, looking for, details,
+  "ask them about"): factual and short, leaving the stories for the first conversation. Photos should include the person.
 - Twine Plus ($9.99/mo): Plan a date, Host an event, and +3 extra introductions a week (10 vs 7).
-  Plan a date and Host an event are free the first time; the second use (and See another) shows the upsell.
+  The first try of each says it's a Plus feature, free "because you're in demo mode :)"; the second try shows the upsell.
 
 ## Publishing the demo
 

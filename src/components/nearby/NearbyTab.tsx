@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import { MY_AREA, NEARBY_EVENTS, NEARBY_PEOPLE, type NearbyEvent, type Person } from "@/lib/app-data";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
 import { SystemAlert, type AlertSpec } from "@/components/ios/SystemAlert";
 import { Button } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
-import { ChatBubbleIcon, EyeIcon, LocateIcon, PinIcon, PlusIcon } from "@/components/ui/icons";
+import { CalendarIcon, ChatBubbleIcon, ChevronDownIcon, EyeIcon, LocateIcon, PinIcon, PlusIcon } from "@/components/ui/icons";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { HeartIcon } from "@/components/photos/StoryScan";
 import { EventSheet } from "./EventSheet";
 import { MaskGlyph, NearbyMap, type MapFilter, type Point } from "./NearbyMap";
@@ -18,8 +19,8 @@ import { PersonSheet } from "./PersonSheet";
 const FILTERS: { id: MapFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "interested", label: "Into you" },
-  { id: "tonight", label: "Tonight" },
-  { id: "events", label: "Events" },
+  { id: "active", label: "Active now" },
+  { id: "twine", label: "Twine events" },
   { id: "blind", label: "Blind dates" },
 ];
 
@@ -52,6 +53,7 @@ export function NearbyTab({
   const [person, setPerson] = useState<Person | null>(null);
   const [peek, setPeek] = useState<Person | null>(null);
   const [event, setEvent] = useState<NearbyEvent | null>(null);
+  const [tray, setTray] = useState(true);
 
   const events = [...hosted, ...NEARBY_EVENTS];
   const into = NEARBY_PEOPLE.filter((p) => p.nearby?.status === "interested" || p.nearby?.status === "chat").length;
@@ -93,6 +95,8 @@ export function NearbyTab({
                 }`}
               >
                 {f.id === "interested" && <HeartIcon size={12} color={on ? "#FF3F6E" : "#FF8AA2"} />}
+                {f.id === "active" && <span className="h-[8px] w-[8px] rounded-full bg-[#34C759]" />}
+                {f.id === "twine" && <BrandMark width={14} tone={on ? "color" : "color"} />}
                 {f.label}
                 {f.id === "interested" && <span className={on ? "text-black/50" : "text-white/45"}>{into}</span>}
               </button>
@@ -101,35 +105,60 @@ export function NearbyTab({
         </div>
       </div>
 
-      {/* This week */}
+      {/* Events tray: dismiss it to see the whole map */}
       <div className="absolute inset-x-0 z-10" style={{ bottom: `calc(${TAB_BAR_SPACE} + 12px)` }}>
-        <div className="no-scrollbar flex snap-x snap-mandatory gap-[10px] overflow-x-auto px-5 pb-1">
-          {events.map((e) => (
-            <motion.button
-              key={e.id}
-              type="button"
-              whileTap={{ scale: 0.97 }}
-              onClick={() => openEvent(e)}
-              className="flex w-[250px] shrink-0 snap-start items-center gap-3 rounded-[22px] border border-white/10 p-[8px] pr-3 text-left shadow-[0_12px_30px_rgba(0,0,0,0.45)]"
-              style={{ background: "rgba(28,26,36,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-            >
-              <span className="relative shrink-0">
-                <Photo src={e.photo} className="h-[60px] w-[60px] rounded-[15px]" />
-                {e.kind === "blind" && (
-                  <span className="absolute -bottom-1 -right-1 flex h-[24px] w-[24px] items-center justify-center rounded-full ring-2 ring-[#1C1A24]" style={{ background: BRAND.colors.violet }}>
-                    <MaskGlyph size={15} />
-                  </span>
-                )}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[16px] font-semibold">{e.title}</span>
-                <span className="block truncate text-[14px] text-white/55">
-                  {e.hosting ? "You're hosting" : going.has(e.id) ? "You're going" : e.when}
-                </span>
-              </span>
-            </motion.button>
-          ))}
-        </div>
+        <AnimatePresence mode="wait" initial={false}>
+          {tray ? (
+            <motion.div key="tray" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}>
+              <div className="mb-2 flex justify-end px-5">
+                <RoundButton label="Hide events" onPress={() => setTray(false)} small>
+                  <ChevronDownIcon size={18} />
+                </RoundButton>
+              </div>
+              <div className="no-scrollbar flex snap-x snap-mandatory gap-[10px] overflow-x-auto px-5 pb-1">
+                {events.map((e) => (
+                  <motion.button
+                    key={e.id}
+                    type="button"
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => openEvent(e)}
+                    className="flex w-[250px] shrink-0 snap-start items-center gap-3 rounded-[22px] border border-white/10 p-[8px] pr-3 text-left shadow-[0_12px_30px_rgba(0,0,0,0.45)]"
+                    style={{ background: "rgba(28,26,36,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+                  >
+                    <span className="relative shrink-0">
+                      <Photo src={e.photo} className="h-[60px] w-[60px] rounded-[15px]" />
+                      <span
+                        className="absolute -bottom-1 -right-1 flex h-[24px] w-[24px] items-center justify-center rounded-full ring-2 ring-[#1C1A24]"
+                        style={{ background: e.kind === "blind" ? BRAND.colors.violet : `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
+                      >
+                        {e.kind === "blind" ? <MaskGlyph size={15} /> : e.hosting ? <CalendarIcon size={13} /> : <BrandMark width={13} tone="white" />}
+                      </span>
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[16px] font-semibold">{e.title}</span>
+                      <span className="block truncate text-[14px] text-white/55">
+                        {e.hosting ? "You're hosting" : going.has(e.id) ? "You're going" : e.when}
+                      </span>
+                    </span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div key="pill" className="flex justify-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTray(true)}
+                className="flex h-[46px] items-center gap-2 rounded-full border border-white/10 px-5 text-[16px] font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.45)]"
+                style={{ background: "rgba(28,26,36,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
+              >
+                <BrandMark width={16} />
+                Events &middot; {events.length}
+              </motion.button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <PersonPeek
@@ -166,14 +195,14 @@ export function NearbyTab({
   );
 }
 
-function RoundButton({ label, onPress, brand = false, children }: { label: string; onPress: () => void; brand?: boolean; children: React.ReactNode }) {
+function RoundButton({ label, onPress, brand = false, small = false, children }: { label: string; onPress: () => void; brand?: boolean; small?: boolean; children: React.ReactNode }) {
   return (
     <motion.button
       type="button"
       aria-label={label}
       whileTap={{ scale: 0.9 }}
       onClick={onPress}
-      className={`pointer-events-auto flex h-[46px] w-[46px] items-center justify-center rounded-full backdrop-blur-xl ${brand ? "" : "border border-white/10 bg-[#1C1A24]/80"}`}
+      className={`pointer-events-auto flex items-center justify-center rounded-full backdrop-blur-xl ${small ? "h-[44px] w-[44px]" : "h-[46px] w-[46px]"} ${brand ? "" : "border border-white/10 bg-[#1C1A24]/80"}`}
       style={brand ? { background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` } : undefined}
     >
       {children}

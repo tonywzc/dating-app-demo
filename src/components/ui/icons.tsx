@@ -290,3 +290,39 @@ export function SlidersIcon({ size = 20, className, strokeWidth = 2 }: IconProps
     </svg>
   );
 }
+
+export function ChevronDownIcon({ size = 18, className, strokeWidth = 2.4 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M5 9l7 7 7-7" />
+    </svg>
+  );
+}
+
+/** Two interlocking rings: a match, made with intent. */
+export function RingsTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth={active ? 2.6 : 2}>
+      <circle cx="10.5" cy="15" r="6.5" />
+      <circle cx="17.5" cy="15" r="6.5" />
+      <path d="M12.2 5.5l1.8-2 1.8 2-1.8 1.6z" fill={active ? "currentColor" : "none"} strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ClockIcon({ size = 16, className, strokeWidth = 2.2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </svg>
+  );
+}
+
+export function MoonIcon({ size = 16, className, strokeWidth = 2.2 }: IconProps) {
+  return (
+    <svg {...line(size, strokeWidth, className)}>
+      <path d="M19.5 14.5A8 8 0 019.5 4.5a8 8 0 1010 10z" />
+    </svg>
+  );
+}

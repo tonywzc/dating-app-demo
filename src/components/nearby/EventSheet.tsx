@@ -8,6 +8,7 @@ import { Photo } from "@/components/ui/Photo";
 import { Sheet } from "@/components/ui/Sheet";
 import { CalendarIcon, CheckIcon, PinIcon } from "@/components/ui/icons";
 import { MaskGlyph } from "./NearbyMap";
+import { BrandMark } from "@/components/brand/BrandMark";
 
 /** An event or a blind date near you. */
 export function EventSheet({ event, going, onRsvp, onClose }: { event: NearbyEvent | null; going: boolean; onRsvp: () => void; onClose: () => void }) {
@@ -25,10 +26,10 @@ export function EventSheet({ event, going, onRsvp, onClose }: { event: NearbyEve
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <span
               className="absolute left-3 top-3 flex items-center gap-[6px] rounded-full px-[10px] py-[4px] text-[12px] font-bold uppercase tracking-[0.05em] text-white"
-              style={{ background: blind ? BRAND.colors.violet : BRAND.colors.rose }}
+              style={{ background: blind ? BRAND.colors.violet : `linear-gradient(100deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
             >
-              {blind ? <MaskGlyph size={14} /> : <CalendarIcon size={13} />}
-              {blind ? "Blind date" : "Event"}
+              {blind ? <MaskGlyph size={14} /> : e.hosting ? <CalendarIcon size={13} /> : <BrandMark width={14} tone="white" />}
+              {blind ? "Blind date by Twine" : e.hosting ? "Your event" : "Hosted by Twine"}
             </span>
           </div>
           <h2 className="mt-4 text-[24px] font-bold tracking-[-0.02em]">{e.title}</h2>

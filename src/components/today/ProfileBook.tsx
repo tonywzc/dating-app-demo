@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import type { Person, StoryChapter } from "@/lib/app-data";
+import type { Media } from "@/lib/mock-data";
+import { InstagramGlyph } from "@/components/ui/InstagramGlyph";
 import { MediaTile } from "@/components/photos/MediaTile";
 import { Photo } from "@/components/ui/Photo";
 import { ShieldCheckIcon } from "@/components/ui/icons";
@@ -120,24 +122,20 @@ const PAGE = {
 function buildChapters(p: Person, variant: "today" | "view" | "self"): Chapter[] {
   const list: (Chapter | false)[] = [
     { id: "cover", title: variant === "self" ? "Cover" : "Why you two", body: () => <Cover p={p} variant={variant} /> },
-    ...p.story.map((c) => ({ id: c.id, title: c.title, body: (n: number) => <Story chapter={c} n={n} /> })),
+    ...p.story.map((c) => ({ id: c.id, title: c.title, body: (n: number) => <Story chapter={c} n={n} instagram={c.id === "now" ? p.instagram : []} /> })),
     Boolean(p.lookingFor) && { id: "looking", title: "Looking for", body: (n: number) => <Looking p={p} n={n} /> },
-    p.facts.length + p.lifestyle.length > 1 && { id: "details", title: "The details", body: (n: number) => <Details p={p} n={n} /> },
+    { id: "details", title: "The details", body: (n: number) => <Details p={p} n={n} self={variant === "self"} /> },
   ];
   return list.filter(Boolean) as Chapter[];
 }
 
-function ChapterHead({ n, title, headline }: { n: number; title: string; headline?: string }) {
+function ChapterHead({ n, title }: { n: number; title: string }) {
   return (
     <div className="px-6 pt-[calc(var(--safe-top)+84px)]">
-      <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[#FF8AA2]">
-        {n}. {title}
-      </div>
-      {headline && (
-        <h2 className="mt-2 text-[32px] leading-[37px] tracking-[-0.01em]" style={SERIF}>
-          {headline}
-        </h2>
-      )}
+      <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#FF8AA2]">{String(n).padStart(2, "0")}</div>
+      <h2 className="mt-1 text-[34px] leading-[38px] tracking-[-0.01em]" style={SERIF}>
+        {title}
+      </h2>
     </div>
   );
 }
@@ -188,7 +186,7 @@ function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }
           )}
         </div>
         <div className="mt-5 flex items-center justify-center gap-2 text-[14px] font-medium text-white/45">
-          {p.name}&apos;s story
+          More about {p.name}
           <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}>
             &rarr;
           </motion.span>
@@ -198,38 +196,29 @@ function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }
   );
 }
 
-function Story({ chapter, n }: { chapter: StoryChapter; n: number }) {
+function Story({ chapter, n, instagram }: { chapter: StoryChapter; n: number; instagram: Media[] }) {
   return (
     <div>
-      <ChapterHead n={n} title={chapter.title} headline={chapter.headline} />
+      <ChapterHead n={n} title={chapter.title} />
+      <p className="mt-5 px-6 text-[20px] leading-[30px] text-white/90">{chapter.text}</p>
       {chapter.photo && (
         <div className="mx-5 mt-6 overflow-hidden rounded-[24px]">
           <Photo src={chapter.photo} className="aspect-[4/3] w-full" />
         </div>
       )}
-      {chapter.text && (
-        <p className="mt-6 px-6 text-[19px] leading-[29px] text-white/88" style={SERIF}>
-          {chapter.text}
-        </p>
-      )}
-      {chapter.moments && chapter.moments.length > 0 && (
-        <div className="mt-6 grid grid-cols-2 gap-[10px] px-5">
-          {chapter.moments.map((m) => (
-            <div key={m.id}>
-              <div className="relative aspect-[3/4] overflow-hidden rounded-[20px]">
-                <MediaTile media={m} className="h-full w-full" showCaption={false} showSource={false} />
+      {instagram.length > 0 && (
+        <>
+          <div className="mt-7 flex items-center gap-2 px-6 text-[13px] font-semibold uppercase tracking-[0.07em] text-white/50">
+            <InstagramGlyph size={15} /> From Instagram
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-[6px] px-5">
+            {instagram.map((m) => (
+              <div key={m.id} className="relative aspect-[9/16] overflow-hidden rounded-[14px]">
+                <MediaTile media={m} className="h-full w-full" showSource={false} showCaption />
               </div>
-              <div className="mt-2 px-1 text-[14px] font-medium leading-[19px] text-white/80">{m.caption}</div>
-            </div>
-          ))}
-        </div>
-      )}
-      {chapter.tags && (
-        <div className="mt-6 flex flex-wrap gap-2 px-6">
-          {chapter.tags.map((t) => (
-            <Chip key={t}>{t}</Chip>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
@@ -238,7 +227,10 @@ function Story({ chapter, n }: { chapter: StoryChapter; n: number }) {
 function Looking({ p, n }: { p: Person; n: number }) {
   return (
     <div>
-      <ChapterHead n={n} title="Looking for" headline={p.lookingFor} />
+      <ChapterHead n={n} title="Looking for" />
+      <p className="mt-5 px-6 text-[26px] leading-[33px]" style={SERIF}>
+        {p.lookingFor}
+      </p>
       {p.hopingToMeet.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2 px-6">
           {p.hopingToMeet.map((h) => (
@@ -252,18 +244,33 @@ function Looking({ p, n }: { p: Person; n: number }) {
   );
 }
 
-function Details({ p, n }: { p: Person; n: number }) {
+function Details({ p, n, self }: { p: Person; n: number; self: boolean }) {
+  const rows = [...p.facts, ...p.lifestyle];
   return (
     <div>
       <ChapterHead n={n} title="The details" />
-      <div className="mx-5 mt-5 overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.04]">
-        {[...p.facts, ...p.lifestyle].map((f) => (
-          <div key={f.label} className="flex min-h-[52px] items-center justify-between gap-4 border-b border-white/[0.07] px-4 last:border-b-0">
-            <span className="text-[15px] text-white/50">{f.label}</span>
-            <span className="text-right text-[16px]">{f.value}</span>
+      {rows.length > 0 && (
+        <div className="mx-5 mt-5 overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.04]">
+          {rows.map((f) => (
+            <div key={f.label} className="flex min-h-[52px] items-center justify-between gap-4 border-b border-white/[0.07] px-4 last:border-b-0">
+              <span className="text-[15px] text-white/50">{f.label}</span>
+              <span className="text-right text-[16px]">{f.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {p.askAbout.length > 0 && (
+        <div className="mt-7 px-6">
+          <div className="text-[13px] font-semibold uppercase tracking-[0.07em] text-white/50">{self ? "Ask me about" : `Ask ${p.name} about`}</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {p.askAbout.map((a) => (
+              <Chip key={a} tint>
+                {a}
+              </Chip>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,12 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ChatsTabIcon, NearbyTabIcon, TodayTabIcon, YouTabIcon } from "@/components/ui/icons";
+import { ChatsTabIcon, NearbyTabIcon, RingsTabIcon, YouTabIcon } from "@/components/ui/icons";
 
 export type Tab = "today" | "nearby" | "chats" | "you";
 
 export const TABS: { id: Tab; label: string; Icon: (p: { active: boolean }) => React.ReactNode }[] = [
-  { id: "today", label: "Today", Icon: TodayTabIcon },
+  { id: "today", label: "Introductions", Icon: RingsTabIcon },
   { id: "nearby", label: "Nearby", Icon: NearbyTabIcon },
   { id: "chats", label: "Chats", Icon: ChatsTabIcon },
   { id: "you", label: "You", Icon: YouTabIcon },
@@ -51,7 +51,7 @@ export function TabBar({ tab, onSelect, badges }: { tab: Tab; onSelect: (tab: Ta
                   </span>
                 )}
               </span>
-              <span className={`relative mt-[1px] text-[10px] font-semibold ${active ? "text-[#FF8AA2]" : "text-white/70"}`}>{label}</span>
+              <span className={`relative mt-[1px] whitespace-nowrap text-[10px] font-semibold ${active ? "text-[#FF8AA2]" : "text-white/70"}`}>{label}</span>
             </button>
           );
         })}

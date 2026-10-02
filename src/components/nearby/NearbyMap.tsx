@@ -6,6 +6,7 @@ import { BRAND } from "@/lib/brand";
 import { MY_AREA, type NearbyEvent, type Person } from "@/lib/app-data";
 import { Photo } from "@/components/ui/Photo";
 import { CalendarIcon, ChatBubbleIcon } from "@/components/ui/icons";
+import { BrandMark } from "@/components/brand/BrandMark";
 import { HeartIcon } from "@/components/photos/StoryScan";
 
 // San Francisco at zoom 13 (Esri dark gray canvas, © OpenStreetMap contributors). Positions in
@@ -22,21 +23,20 @@ export const MAP_H = TILE * TILES_Y.length;
 const LONG_PRESS_MS = 420;
 const MOVE_SLOP = 8;
 
-export type MapFilter = "all" | "interested" | "tonight" | "events" | "blind";
+export type MapFilter = "all" | "interested" | "active" | "twine" | "blind";
 
 export type Point = { x: number; y: number };
 
 function visiblePerson(p: Person, filter: MapFilter) {
-  if (filter === "events" || filter === "blind") return false;
+  if (filter === "twine" || filter === "blind") return false;
   if (filter === "interested") return p.nearby?.status === "interested" || p.nearby?.status === "chat";
-  if (filter === "tonight") return Boolean(p.nearby?.freeTonight);
+  if (filter === "active") return Boolean(p.nearby?.activeNow) || p.nearby?.status === "chat";
   return true;
 }
 
 function visibleEvent(e: NearbyEvent, filter: MapFilter) {
-  if (filter === "events") return e.kind === "event";
+  if (filter === "twine") return e.kind === "event" && !e.hosting;
   if (filter === "blind") return e.kind === "blind";
-  if (filter === "tonight") return e.when.startsWith("Tonight");
   return filter === "all";
 }
 
@@ -193,7 +193,7 @@ const RING = `conic-gradient(from 200deg, ${BRAND.colors.roseTop}, ${BRAND.color
 
 function PersonPin({ person, hidden, onTap, onHold }: { person: Person; hidden: boolean; onTap: () => void; onHold: () => void }) {
   const press = usePress(onTap, onHold);
-  const { x, y, status, freeTonight } = person.nearby!;
+  const { x, y, status, activeNow } = person.nearby!;
   const size = 52;
   return (
     <motion.div
@@ -238,8 +238,8 @@ function PersonPin({ person, hidden, onTap, onHold }: { person: Person; hidden: 
             <ChatBubbleIcon size={11} />
           </span>
         )}
-        {freeTonight && status !== "chat" && (
-          <span className="absolute -bottom-[2px] -right-[2px] h-[14px] w-[14px] rounded-full border-2 border-[#0B0A10] bg-[#FFD60A]" />
+        {activeNow && status !== "chat" && (
+          <span className="absolute -bottom-[2px] -right-[2px] h-[14px] w-[14px] rounded-full border-2 border-[#0B0A10] bg-[#34C759]" />
         )}
       </motion.button>
       <span className="pointer-events-none absolute left-1/2 top-[calc(100%+4px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/55 px-[7px] py-[1px] text-[11px] font-semibold text-white backdrop-blur">
@@ -264,7 +264,7 @@ function EventPin({ event, hidden, onTap }: { event: NearbyEvent; hidden: boolea
           className="flex h-[44px] w-[44px] items-center justify-center rounded-[14px] border-2 border-white/90 shadow-[0_6px_16px_rgba(0,0,0,0.5)]"
           style={{ background: blind ? `linear-gradient(140deg, ${BRAND.colors.violetTop}, ${BRAND.colors.violet})` : `linear-gradient(140deg, ${BRAND.colors.roseTop}, ${BRAND.colors.rose})` }}
         >
-          {blind ? <MaskGlyph /> : <CalendarIcon size={20} className="text-white" />}
+          {blind ? <MaskGlyph /> : event.hosting ? <CalendarIcon size={20} className="text-white" /> : <BrandMark width={22} tone="white" />}
         </span>
         <span className="absolute left-1/2 top-[calc(100%+4px)] -translate-x-1/2 whitespace-nowrap rounded-full bg-black/60 px-[7px] py-[1px] text-[11px] font-semibold text-white backdrop-blur">
           {event.title}

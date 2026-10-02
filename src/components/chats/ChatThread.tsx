@@ -77,18 +77,6 @@ export function ChatThread({
             <span className="truncate text-[18px] font-semibold">{p.name}</span>
             {mutual && <HeartIcon size={14} color="#FF8AA2" />}
           </button>
-          {mutual && !thread.planning && (
-            <motion.button
-              type="button"
-              aria-label="Plan a date"
-              whileTap={{ scale: 0.92 }}
-              onClick={plan}
-              className="flex h-[44px] w-[44px] items-center justify-center rounded-full"
-              style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
-            >
-              <CalendarIcon size={20} />
-            </motion.button>
-          )}
         </div>
         <AnimatePresence>
           {thread.planning && (
@@ -176,6 +164,18 @@ export function ChatThread({
                 send(text);
               }}
             >
+              <motion.button
+                type="button"
+                aria-label="More"
+                aria-expanded={menu}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setMenu((m) => !m)}
+                className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-white/[0.08]"
+              >
+                <motion.span animate={{ rotate: menu ? 45 : 0 }}>
+                  <PlusIcon size={22} />
+                </motion.span>
+              </motion.button>
               <input
                 value={text}
                 onChange={(e) => setText(e.target.value)}
@@ -194,23 +194,19 @@ export function ChatThread({
                   <SendIcon size={20} />
                 </motion.button>
               ) : (
-                <>
-                  <button type="button" aria-label="Camera" onClick={() => setCamera(true)} className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-white/[0.08]">
-                    <CameraIcon size={22} />
-                  </button>
+                mutual && (
                   <motion.button
                     type="button"
-                    aria-label="More"
-                    aria-expanded={menu}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setMenu((m) => !m)}
-                    className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-white/[0.08]"
+                    whileTap={{ scale: 0.95 }}
+                    disabled={thread.planning}
+                    onClick={plan}
+                    className="flex h-[48px] shrink-0 items-center gap-2 rounded-full px-4 text-[16px] font-semibold transition-opacity disabled:opacity-40"
+                    style={{ background: `linear-gradient(100deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
                   >
-                    <motion.span animate={{ rotate: menu ? 45 : 0 }}>
-                      <PlusIcon size={22} />
-                    </motion.span>
+                    <CalendarIcon size={18} />
+                    Plan a date
                   </motion.button>
-                </>
+                )
               )}
             </form>
           </>
@@ -220,11 +216,11 @@ export function ChatThread({
         <AnimatePresence>
           {menu && (
             <motion.div
-              className="absolute bottom-[calc(100%+8px)] right-3 w-[230px] overflow-hidden rounded-[22px] border border-white/10 bg-[#24222C]/95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+              className="absolute bottom-[calc(100%+8px)] left-3 w-[230px] overflow-hidden rounded-[22px] border border-white/10 bg-[#24222C]/95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl"
               initial={{ opacity: 0, scale: 0.85, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 6 }}
-              style={{ transformOrigin: "bottom right" }}
+              style={{ transformOrigin: "bottom left" }}
               transition={{ type: "spring", stiffness: 480, damping: 32 }}
             >
               <MenuItem
@@ -235,7 +231,14 @@ export function ChatThread({
                   setPicker(true);
                 }}
               />
-              {mutual && <MenuItem icon={<CalendarIcon size={20} />} label="Plan a date" onPress={plan} disabled={thread.planning} />}
+              <MenuItem
+                icon={<CameraIcon size={21} />}
+                label="Camera"
+                onPress={() => {
+                  setMenu(false);
+                  setCamera(true);
+                }}
+              />
             </motion.div>
           )}
         </AnimatePresence>

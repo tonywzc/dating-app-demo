@@ -3,7 +3,7 @@
 import { Sheet } from "@/components/ui/Sheet";
 import { CheckIcon } from "@/components/ui/icons";
 
-export const DISTANCES = ["5 km", "10 km", "25 km", "Anywhere"];
+export const DISTANCES = ["3 mi", "5 mi", "15 mi", "Anywhere"];
 
 /** How far Today looks for your introductions. Distances themselves are never shown on profiles. */
 export function DistanceSheet({ open, value, onChange, onClose }: { open: boolean; value: string; onChange: (v: string) => void; onClose: () => void }) {

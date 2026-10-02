@@ -9,19 +9,18 @@ const unsplash = (id: string, w = 720, h = 960) =>
   `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format&q=70`;
 const face = (id: string) => `https://images.unsplash.com/photo-${id}?w=160&h=160&fit=crop&crop=faces&auto=format&q=70`;
 
-const scene = (id: string, caption: string): Media => ({ id: `u-${id}`, src: unsplash(id, 540, 960), kind: "photo", source: "instagram", caption });
 
 export type Fact = { label: string; value: string };
 
-/** One chapter of someone's story. Chapters run in order: where they're from, how they grew up, what changed them, their life now. */
+/**
+ * One part of the matchmaker's brief: short and factual, the way a good matchmaker
+ * describes someone. It leaves the real stories for the first conversation.
+ */
 export type StoryChapter = {
   id: string;
   title: string;
-  headline: string;
   text: string;
   photo?: string;
-  moments?: Media[];
-  tags?: string[];
 };
 
 /** How someone can show up on Nearby. */
@@ -35,7 +34,8 @@ export type NearbyInfo = {
   upFor: string;
   /** A short line in their words. */
   line: string;
-  freeTonight?: boolean;
+  /** Out and about right now. */
+  activeNow?: boolean;
 };
 
 export type Person = {
@@ -52,7 +52,12 @@ export type Person = {
   why: string;
   /** What you share, as chips under the why. */
   overlaps: string[];
+  /** Background, work and education, life now. */
   story: StoryChapter[];
+  /** Stories brought over from Instagram (some with them in it). */
+  instagram: Media[];
+  /** Things to ask about in person: hooks, not answers. */
+  askAbout: string[];
   interests: string[];
   lookingFor: string;
   hopingToMeet: string[];
@@ -63,56 +68,47 @@ export type Person = {
   nearby?: NearbyInfo;
 };
 
+/**
+ * Every photo of Maya is cut from the same portrait (Unsplash), so it is always the
+ * same person: the full shot for her profile, and crops and a black-and-white
+ * version for the Instagram stories she's in.
+ */
+const MAYA_ID = "1494790108377-be9c29b29330";
+const mayaShot = (params: string) => `https://images.unsplash.com/photo-${MAYA_ID}?w=540&h=960&fit=crop&auto=format&q=70&${params}`;
+const igPhoto = (id: string, src: string, caption: string): Media => ({ id, src, kind: "photo", source: "instagram", caption });
+
 const MAYA: Person = {
   id: "maya",
   name: "Maya",
   age: 29,
-  photo: unsplash("1494790108377-be9c29b29330", 900, 1200),
-  avatar: face("1494790108377-be9c29b29330"),
+  photo: unsplash(MAYA_ID, 900, 1200),
+  avatar: face(MAYA_ID),
   neighborhood: "Inner Sunset",
   verified: true,
-  essence: "Designer, potter, early riser. Still calls her grandmother every Sunday.",
-  why: "You both grew up around a crowded family table, and you both still cook for the people you love. And you're both looking for something serious, at an easy pace.",
+  essence: "Design lead, potter, early riser.",
+  why: "You both grew up in big families and still cook for the people you love. And you both want something serious, at an easy pace.",
   overlaps: ["Big family dinners", "Cooks for friends", "Weekend hikes", "Something serious"],
   story: [
-    {
-      id: "roots",
-      title: "Roots",
-      headline: "Portland, the oldest of four",
-      text: "Maya grew up in a narrow house in Southeast Portland, the oldest of four. Her grandmother lived with them and ran the kitchen. Dinner was the one thing nobody missed.",
-      photo: unsplash("1517457373958-b7bdd4587205", 900, 700),
-    },
-    {
-      id: "growing",
-      title: "Growing up",
-      headline: "Rain, forests and a darkroom",
-      text: "Weekends were hikes in the Columbia Gorge with her dad. At fourteen she found her school's darkroom and practically lived there. She still shoots a roll of film every month.",
-      photo: unsplash("1470071459604-3b5ec3a7fe05", 900, 700),
-    },
-    {
-      id: "turning",
-      title: "Turning points",
-      headline: "Art school, then a leap",
-      text: "She went to RISD on a scholarship, the first in her family to study art. After graduating she moved to San Francisco with two suitcases and no job, and talked her way into a small design studio.",
-      photo: unsplash("1449034446853-66c86144b0ad", 900, 700),
-    },
+    { id: "background", title: "Background", text: "Grew up in Portland, the oldest of four, in a close family. Still calls her grandmother every Sunday." },
+    { id: "work", title: "Work & education", text: "Leads design at a small studio in SoMa. Went to RISD on a scholarship." },
     {
       id: "now",
-      title: "Now",
-      headline: "Designer, potter, early riser",
-      text: "Six years on, she leads design at that same studio. She runs Lands End before work, throws pots on weekends, and fosters a cat named Miso.",
-      moments: [
-        scene("1464278533981-50106e6176b1", "Up before the fog lifts"),
-        scene("1513364776144-60967b0f800f", "Saturdays at the studio"),
-        scene("1504674900247-0877df9cc836", "Dinner for my sisters"),
-        scene("1506905925346-21bda4d32df4", "Eastern Sierra, last fall"),
-      ],
-      tags: ["Ceramics", "Trail running", "Film photography", "Cooking", "Jazz"],
+      title: "Life now",
+      text: "Lives in the Inner Sunset with her foster cat, Miso. Runs before work, spends Saturdays at a ceramics studio, and cooks for friends often.",
     },
   ],
+  instagram: [
+    igPhoto("maya-film", mayaShot("crop=faces&sat=-100"), "Self-portrait, on film"),
+    igPhoto("maya-run", unsplash("1464278533981-50106e6176b1", 540, 960), "Lands End, 6:40 AM"),
+    igPhoto("maya-close", mayaShot("crop=focalpoint&fp-x=0.5&fp-y=0.32&fp-z=1.7"), "Studio day"),
+    igPhoto("maya-wheel", unsplash("1513364776144-60967b0f800f", 540, 960), "Saturdays at the wheel"),
+    igPhoto("maya-dinner", unsplash("1504674900247-0877df9cc836", 540, 960), "Dinner for my sisters"),
+    igPhoto("maya-sierra", unsplash("1506905925346-21bda4d32df4", 540, 960), "Eastern Sierra"),
+  ],
+  askAbout: ["Her grandmother's kitchen", "The darkroom years", "Miso the cat"],
   interests: ["Ceramics", "Trail running", "Film photography", "Cooking", "Jazz"],
   lookingFor: "Something serious, no rush",
-  hopingToMeet: ["Steady and warm", "Close to family", "Curious", "Has their own thing"],
+  hopingToMeet: ["Kind and steady", "Close to family", "Curious"],
   facts: [
     { label: "Work", value: "Design lead" },
     { label: "Education", value: "RISD" },
@@ -132,48 +128,29 @@ const MAYA: Person = {
   ],
 };
 
+const NADIA_ID = "1508214751196-bcfd4ca60f91";
 const NADIA: Person = {
   id: "nadia",
   name: "Nadia",
   age: 30,
-  photo: unsplash("1508214751196-bcfd4ca60f91", 900, 1200),
-  avatar: face("1508214751196-bcfd4ca60f91"),
+  photo: unsplash(NADIA_ID, 900, 1200),
+  avatar: face(NADIA_ID),
   neighborhood: "Noe Valley",
   verified: true,
   essence: "History teacher, Sunday host, midfielder.",
-  why: "You both grew up with family at the center of everything, and you both host the people you love. She's looking for something serious too.",
-  overlaps: ["Family first", "Hosts Sunday dinners", "Loves a good story", "Something serious"],
+  why: "You both grew up with family at the center of everything, and you both host the people you love. She wants something serious too.",
+  overlaps: ["Family first", "Hosts Sunday dinners", "Something serious"],
   story: [
-    {
-      id: "roots",
-      title: "Roots",
-      headline: "Beirut, then Sacramento",
-      text: "Nadia was born in Beirut and moved to Sacramento at eight, when her parents opened a small Lebanese restaurant. She did her homework at the counter between lunch and dinner.",
-      photo: unsplash("1414235077428-338989a2e8c0", 900, 700),
-    },
-    {
-      id: "growing",
-      title: "Growing up",
-      headline: "The kid with the history books",
-      text: "She translated for her parents, read every history book in the school library, and played soccer with her cousins every weekend.",
-      photo: unsplash("1481627834876-b7833e8f5570", 900, 700),
-    },
-    {
-      id: "turning",
-      title: "Turning points",
-      headline: "First to college, then the classroom",
-      text: "The first in her family to go to college, she studied history at UC Davis, then started teaching in Oakland. One class of tenth graders made it her life's work.",
-      photo: unsplash("1503676260728-1c00da094a0b", 900, 700),
-    },
-    {
-      id: "now",
-      title: "Now",
-      headline: "Teacher, host, midfielder",
-      text: "She teaches history in the city, plays in a Tuesday night league, and hosts a long mezze lunch most Sundays.",
-      moments: [scene("1504674900247-0877df9cc836", "Sunday mezze"), scene("1507525428034-b723cf961d3e", "Summer at the coast")],
-      tags: ["History", "Soccer", "Hosting", "Podcasts"],
-    },
+    { id: "background", title: "Background", text: "Born in Beirut, raised in Sacramento, where her parents run a Lebanese restaurant. First in her family to go to college." },
+    { id: "work", title: "Work & education", text: "Teaches history at a public high school in the city. Studied history at UC Davis." },
+    { id: "now", title: "Life now", text: "Plays in a Tuesday night soccer league and hosts a long lunch for friends most Sundays." },
   ],
+  instagram: [
+    igPhoto("nadia-bw", `https://images.unsplash.com/photo-${NADIA_ID}?w=540&h=960&fit=crop&auto=format&q=70&crop=faces&sat=-100`, "Golden hour"),
+    igPhoto("nadia-lunch", unsplash("1414235077428-338989a2e8c0", 540, 960), "Sunday lunch"),
+    igPhoto("nadia-coast", unsplash("1507525428034-b723cf961d3e", 540, 960), "Summer at the coast"),
+  ],
+  askAbout: ["The family restaurant", "Her favorite era to teach", "Sunday lunches"],
   interests: ["History", "Soccer", "Hosting", "Podcasts"],
   lookingFor: "Finding my person",
   hopingToMeet: ["Kind", "Family-minded", "Good listener"],
@@ -187,31 +164,13 @@ const NADIA: Person = {
     { label: "Kids", value: "Wants them" },
     { label: "Drinks", value: "Rarely" },
   ],
-  openers: ["What's your favorite period of history to teach?", "Mezze Sundays? I'll bring dessert.", "What position do you play?"],
+  openers: ["What's your favorite era of history to teach?", "Sunday lunches? I'll bring dessert.", "What position do you play?"],
 };
 
 const IRIS_STORY: StoryChapter[] = [
-  {
-    id: "roots",
-    title: "Roots",
-    headline: "Monterey tide pools",
-    text: "Iris grew up a few blocks from the water in Monterey. Her mom worked at the aquarium, so most afternoons ended in the tide pools.",
-    photo: unsplash("1507525428034-b723cf961d3e", 900, 700),
-  },
-  {
-    id: "turning",
-    title: "Turning points",
-    headline: "Hawaii, and a life underwater",
-    text: "She did her PhD in Hawaii studying coral, learned to free-dive, and came home knowing she'd never work far from the ocean.",
-    photo: unsplash("1501785888041-af3ef285b470", 900, 700),
-  },
-  {
-    id: "now",
-    title: "Now",
-    headline: "Kelp forests and cold surf",
-    text: "She studies kelp forests at the Academy of Sciences and surfs Ocean Beach before work, fog or not.",
-    tags: ["Surfing", "Ocean", "Photography"],
-  },
+  { id: "background", title: "Background", text: "Grew up in Monterey, a few blocks from the water. Her mom worked at the aquarium." },
+  { id: "work", title: "Work & education", text: "Marine biologist studying kelp forests at the Academy of Sciences. PhD from the University of Hawaii." },
+  { id: "now", title: "Life now", text: "Surfs Ocean Beach before work, fog or not, and shoots a lot of underwater photos." },
 ];
 
 type Seed = Pick<Person, "id" | "name" | "age" | "neighborhood"> & {
@@ -224,7 +183,7 @@ type Seed = Pick<Person, "id" | "name" | "age" | "neighborhood"> & {
   story?: StoryChapter[];
 };
 
-/** Everyone else gets a lighter profile built from a few lines, in the same chapter layout. */
+/** Everyone else gets a lighter profile built from a few lines, in the same layout. */
 function person(s: Seed): Person {
   const up = s.nearby?.upFor.toLowerCase();
   return {
@@ -238,7 +197,9 @@ function person(s: Seed): Person {
     essence: s.essence,
     why: `You both love ${s.interests[0].toLowerCase()} and ${s.interests[1].toLowerCase()}, and you're both after something that feels easy.`,
     overlaps: s.interests.slice(0, 3),
-    story: s.story ?? [{ id: "now", title: "Now", headline: s.essence, text: s.nearby?.line ?? "", tags: s.interests }],
+    story: s.story ?? [{ id: "now", title: "Life now", text: s.essence }],
+    instagram: [],
+    askAbout: s.interests,
     interests: s.interests,
     lookingFor: s.lookingFor,
     hopingToMeet: [],
@@ -284,7 +245,7 @@ const ELENA = person({
   interests: ["Natural wine", "Vinyl", "Dancing"],
   lookingFor: "Seeing where it goes",
   work: "Sommelier",
-  nearby: { x: 804, y: 590, status: "chat", upFor: "Drinks tonight", line: "At a wine bar till 10. Come say hi?", freeTonight: true },
+  nearby: { x: 804, y: 590, status: "chat", upFor: "Drinks tonight", line: "At a wine bar till 10. Come say hi?", activeNow: true },
 });
 
 const CHLOE = person({
@@ -324,7 +285,7 @@ const NEARBY_ONLY: Person[] = [
     interests: ["Karaoke", "Tacos", "Art"],
     lookingFor: "Seeing where it goes",
     work: "Tattoo artist",
-    nearby: { x: 884, y: 736, status: "chat", upFor: "Karaoke tonight", line: "Need one more for a duet. Can you hold a note?", freeTonight: true },
+    nearby: { x: 884, y: 736, status: "chat", upFor: "Karaoke tonight", line: "Need one more for a duet. Can you hold a note?", activeNow: true },
   }),
   person({
     id: "mia",
@@ -372,7 +333,7 @@ const NEARBY_ONLY: Person[] = [
     interests: ["Baking", "Jazz", "Cycling"],
     lookingFor: "Seeing where it goes",
     work: "Pastry chef",
-    nearby: { x: 896, y: 382, status: "chat", upFor: "Jazz tonight", line: "Jazz at 9. I'll save you a seat.", freeTonight: true },
+    nearby: { x: 896, y: 382, status: "chat", upFor: "Jazz tonight", line: "Jazz at 9. I'll save you a seat.", activeNow: true },
   }),
   person({
     id: "iris",
@@ -432,16 +393,17 @@ export const HOST_KINDS = [
   { id: "hike", label: "Hike", photo: unsplash("1506905925346-21bda4d32df4", 600, 400) },
 ] as const;
 
+/** Events and blind dates hosted by Twine. */
 export const NEARBY_EVENTS: NearbyEvent[] = [
   {
     id: "wine",
     kind: "event",
-    title: "Natural wine night",
+    title: "Candlelit wine tasting",
     when: "Tonight · 7 PM",
     where: "Hayes Valley",
-    photo: unsplash("1514933651103-005eec06c04b", 600, 400),
-    detail: "18 going",
-    blurb: "Six small-batch wines, a cheese plate, and a room full of people who'd rather talk than swipe.",
+    photo: unsplash("1510812431401-41d2bd2722f3", 600, 400),
+    detail: "16 singles",
+    blurb: "Six wines, one long candlelit table, and a seat next to someone we think you'll like.",
     x: 846,
     y: 618,
     faces: [ELENA.avatar, NEARBY_ONLY[0].avatar],
@@ -454,19 +416,19 @@ export const NEARBY_EVENTS: NearbyEvent[] = [
     where: "Mission",
     photo: unsplash("1414235077428-338989a2e8c0", 600, 400),
     detail: "2 spots left",
-    blurb: "Muse seats six people who'd get along, around one long table. You find out who's coming when you sit down.",
+    blurb: "Six people we think would click, one long table. You meet everyone when you sit down.",
     x: 852,
     y: 770,
   },
   {
     id: "run",
     kind: "event",
-    title: "Sunset run club",
+    title: "Sunset sail for singles",
     when: "Sat · 6 PM",
     where: "Crissy Field",
     photo: unsplash("1507525428034-b723cf961d3e", 600, 400),
-    detail: "32 going",
-    blurb: "An easy 5K along the water, then tacos. All paces welcome.",
+    detail: "20 singles",
+    blurb: "Two hours on the bay at golden hour, with music and a glass of something.",
     x: 586,
     y: 398,
     faces: [NEARBY_ONLY[3].avatar],
@@ -478,20 +440,20 @@ export const NEARBY_EVENTS: NearbyEvent[] = [
     when: "Sun · 11 AM",
     where: "Russian Hill",
     photo: unsplash("1501339847302-ac426a4a7cbb", 600, 400),
-    detail: "Muse picks your match",
-    blurb: "Muse pairs you with one person nearby you haven't seen yet. You'll get their first name the night before.",
+    detail: "We pick your match",
+    blurb: "We pair you with one person you haven't seen yet. You get their first name the night before.",
     x: 838,
     y: 430,
   },
   {
     id: "jazz",
     kind: "event",
-    title: "Jazz in the park",
-    when: "Sun · 2 PM",
+    title: "Jazz & slow dance night",
+    when: "Sun · 8 PM",
     where: "Golden Gate Park",
     photo: unsplash("1493225457124-a3eb161ffa5f", 600, 400),
-    detail: "54 going",
-    blurb: "A free afternoon set on the lawn. Bring a blanket and someone to share it with.",
+    detail: "40 singles",
+    blurb: "A live trio, low lights and a dance floor. Lessons for the first half hour.",
     x: 470,
     y: 652,
   },
@@ -641,6 +603,16 @@ export const REPLIES: Record<string, string[]> = {
   ava: ["Okay, you're in. Do you know the words to Dancing Queen?", "Perfect. Booth 3, 9 PM."],
   nora: ["Front row, saving you a seat.", "See you at 9!"],
   default: ["Hey! Glad you said hi.", "Sounds good to me."],
+};
+
+/** Muse's one-line read on each chat, for the sorted inbox. */
+export const MUSE_HINTS: Record<string, string> = {
+  sofia: "She asked to pick a day. Plan it?",
+  elena: "At a wine bar till 10 tonight",
+  hana: "Into cooking, like you",
+  priya: "Gone quiet since Monday. Send a nudge?",
+  chloe: "Hasn't seen your message yet",
+  maya: "Today's introduction",
 };
 
 export const THEIR_WHEN = ["Fri evening", "Sat daytime"];

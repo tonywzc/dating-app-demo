@@ -40,7 +40,7 @@ const NOTIFY: { key: NotifyKey; label: string }[] = [
 
 export const DEFAULT_SETTINGS: Settings = {
   calendar: null,
-  distance: "25 km",
+  distance: "15 mi",
   shareDates: true,
   showOnToday: true,
   paused: false,

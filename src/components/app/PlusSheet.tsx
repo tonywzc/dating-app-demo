@@ -24,8 +24,25 @@ const TITLE: Record<PlusFeature, string> = {
   more: "Want to meet more people?",
 };
 
-/** Twine Plus upsell. The demo has no payment step: subscribing just turns Plus on. */
-export function PlusSheet({ feature, onSubscribe, onClose }: { feature: PlusFeature | null; onSubscribe: () => void; onClose: () => void }) {
+const NAME: Record<PlusFeature, string> = { date: "Plan a date", event: "Hosting events", more: "Seeing more people" };
+
+/**
+ * Twine Plus. With `demo`, it's the first try of a feature: we say it's Plus, and let
+ * you use it anyway. Otherwise it's the upsell. There's no payment step in the demo.
+ */
+export function PlusSheet({
+  feature,
+  demo = false,
+  onSubscribe,
+  onTry,
+  onClose,
+}: {
+  feature: PlusFeature | null;
+  demo?: boolean;
+  onSubscribe: () => void;
+  onTry: () => void;
+  onClose: () => void;
+}) {
   const [shown, setShown] = useState(feature);
   if (feature && feature !== shown) setShown(feature);
 
@@ -42,9 +59,9 @@ export function PlusSheet({ feature, onSubscribe, onClose }: { feature: PlusFeat
           >
             <BrandMark width={34} tone="white" />
           </motion.div>
-          <h2 className="mt-4 text-[24px] font-bold tracking-[-0.02em]">{TITLE[shown]}</h2>
+          <h2 className="mt-4 text-[24px] font-bold tracking-[-0.02em]">{demo ? `${NAME[shown]} is a Plus feature` : TITLE[shown]}</h2>
           <p className="mt-1 text-[16px] text-white/60">
-            {BRAND.name} Plus &middot; {PLUS_PRICE}
+            {demo ? "Free this time, because you're in demo mode :)" : `${BRAND.name} Plus · ${PLUS_PRICE}`}
           </p>
           <div className="mt-5 space-y-2 text-left">
             {FEATURES.map((f) => (
@@ -61,7 +78,7 @@ export function PlusSheet({ feature, onSubscribe, onClose }: { feature: PlusFeat
             ))}
           </div>
           <div className="mt-6">
-            <Button onClick={onSubscribe}>Get Plus &middot; {PLUS_PRICE}</Button>
+            {demo ? <Button onClick={onTry}>Try it</Button> : <Button onClick={onSubscribe}>Get Plus &middot; {PLUS_PRICE}</Button>}
             <div className="mt-1 flex justify-center">
               <TextButton onClick={onClose} className="text-white/60">
                 Not now

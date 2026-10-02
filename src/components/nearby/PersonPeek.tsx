@@ -93,7 +93,7 @@ export function StatusPill({ person, className = "" }: { person: Person; classNa
         Up for a chat
       </span>
     );
-  if (person.nearby?.freeTonight)
-    return <span className={`rounded-full bg-[#FFD60A] px-[10px] py-[4px] text-[12px] font-semibold text-black ${className}`}>Free tonight</span>;
+  if (person.nearby?.activeNow)
+    return <span className={`rounded-full bg-[#34C759] px-[10px] py-[4px] text-[12px] font-semibold text-white ${className}`}>Active now</span>;
   return null;
 }

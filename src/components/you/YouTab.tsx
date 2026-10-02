@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ageFrom } from "@/lib/format";
-import type { Answers, Summary } from "@/lib/muse-script";
+import type { Summary } from "@/lib/muse-script";
 import type { Person, StoryChapter } from "@/lib/app-data";
-import { ARCHIVE_STORIES, CAMERA_ROLL_MEDIA, PROFILE_PHOTO, TOP_STORIES, type Muse } from "@/lib/mock-data";
+import { ARCHIVE_STORIES, CAMERA_ROLL_MEDIA, PROFILE_PHOTO, type Muse } from "@/lib/mock-data";
 import { PushScreen, BackButton } from "@/components/app/PushScreen";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
 import { MediaTile } from "@/components/photos/MediaTile";
@@ -16,27 +16,18 @@ import { EditFieldSheet, type EditTarget } from "@/components/profile/EditFieldS
 import { ProfileBook } from "@/components/today/ProfileBook";
 import { TopFade } from "@/components/ui/TopFade";
 import { Photo } from "@/components/ui/Photo";
-import { CloseIcon, EyeIcon, GearIcon, MicIcon, PlusIcon, ShieldCheckIcon } from "@/components/ui/icons";
+import { ChevronRight, CloseIcon, EyeIcon, GearIcon, ImageIcon, MicIcon, PlusIcon, ShieldCheckIcon } from "@/components/ui/icons";
+import { StoryEditSheet } from "./StoryEditSheet";
 
 /** Everything on your public profile that you can edit. */
-export type Me = { fields: Field[]; interests: string[]; moments: Moment[] };
+export type Me = { fields: Field[]; interests: string[]; moments: Moment[]; story: StoryChapter[] };
 
 const field = (fields: Field[], id: string) => fields.find((f) => f.id === id)?.value ?? "";
 
 /** You, in the same book layout others see in Today. */
-export function selfAsPerson(me: Me, summary: Summary, answers: Answers): Person {
+export function selfAsPerson(me: Me, summary: Summary): Person {
   const birthday = field(me.fields, "birthday");
   const section = (title: string) => summary.sections.find((s) => s.title === title)?.items ?? [];
-  const story: StoryChapter[] = [];
-  if (answers.roots) story.push({ id: "roots", title: "Roots", headline: "Sunday dinners at grandma's", text: answers.roots, photo: TOP_STORIES[3].src });
-  story.push({
-    id: "now",
-    title: "Now",
-    headline: section("Your world")[0] ?? "Life lately",
-    text: answers.lately ?? "",
-    moments: me.moments.map((m) => ({ ...m.media, caption: m.title })),
-    tags: me.interests,
-  });
   return {
     id: "me",
     name: field(me.fields, "name"),
@@ -48,7 +39,9 @@ export function selfAsPerson(me: Me, summary: Summary, answers: Answers): Person
     essence: summary.essence,
     why: "",
     overlaps: [],
-    story,
+    story: me.story,
+    instagram: me.moments.map((m) => ({ ...m.media, caption: m.title })),
+    askAbout: ["Grandma's broth", "Fresh pasta", "Marin hikes"],
     interests: me.interests,
     lookingFor: field(me.fields, "looking"),
     hopingToMeet: section("You're hoping to meet"),
@@ -64,7 +57,6 @@ export function YouTab({
   onChange,
   muse,
   summary,
-  answers,
   onOpenSettings,
   onTalkToMuse,
 }: {
@@ -72,14 +64,14 @@ export function YouTab({
   onChange: (me: Me) => void;
   muse: Muse;
   summary: Summary;
-  answers: Answers;
   onOpenSettings: () => void;
   onTalkToMuse: () => void;
 }) {
   const [editing, setEditing] = useState<EditTarget | null>(null);
   const [adding, setAdding] = useState(false);
   const [preview, setPreview] = useState(false);
-  const self = useMemo(() => selfAsPerson(me, summary, answers), [me, summary, answers]);
+  const [chapter, setChapter] = useState<StoryChapter | null>(null);
+  const self = useMemo(() => selfAsPerson(me, summary), [me, summary]);
 
   const groups = {
     basics: me.fields.filter((f) => ["name", "birthday", "gender"].includes(f.id)),
@@ -144,10 +136,10 @@ export function YouTab({
           </div>
         </div>
 
-        {/* Photos & moments */}
+        {/* Photos & stories */}
         <section className="mt-6">
           <div className="flex items-baseline justify-between px-3 pb-2">
-            <h2 className="text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">Photos & moments</h2>
+            <h2 className="text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">Photos & stories</h2>
           </div>
           <div className="grid grid-cols-3 gap-[6px]">
             <div className="relative aspect-[3/4] overflow-hidden rounded-[16px]">
@@ -188,6 +180,35 @@ export function YouTab({
               <PlusIcon size={22} />
               <span className="text-[12px] font-medium">Add</span>
             </motion.button>
+          </div>
+        </section>
+
+        {/* Your story */}
+        <section className="mt-6">
+          <h2 className="px-3 pb-2 text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">Your story</h2>
+          <div className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.04]">
+            {me.story.map((c) => (
+              <motion.button
+                key={c.id}
+                type="button"
+                onClick={() => setChapter(c)}
+                whileTap={{ backgroundColor: "rgba(255,255,255,0.06)" }}
+                className="flex w-full items-center gap-3 border-b border-white/[0.07] px-4 py-3 text-left last:border-b-0"
+              >
+                {c.photo ? (
+                  <Photo src={c.photo} className="h-[52px] w-[52px] shrink-0 rounded-[14px]" />
+                ) : (
+                  <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] border border-dashed border-white/25 text-white/50">
+                    <ImageIcon size={20} />
+                  </span>
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[16px] font-semibold">{c.title}</span>
+                  <span className="line-clamp-2 block text-[14px] leading-[19px] text-white/55">{c.text}</span>
+                </span>
+                <ChevronRight className="shrink-0 text-white/30" />
+              </motion.button>
+            ))}
           </div>
         </section>
 
@@ -260,6 +281,14 @@ export function YouTab({
       </div>
 
       <EditFieldSheet target={editing} onSave={save} onClose={() => setEditing(null)} />
+      <StoryEditSheet
+        chapter={chapter}
+        onClose={() => setChapter(null)}
+        onSave={(c) => {
+          onChange({ ...me, story: me.story.map((x) => (x.id === c.id ? c : x)) });
+          setChapter(null);
+        }}
+      />
       <PhotoPicker
         open={adding}
         title="Add moments"
