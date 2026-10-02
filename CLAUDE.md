@@ -17,6 +17,8 @@
 The shareable demo lives at https://tonywzc.github.io/dating-app-demo/ and redeploys on every push to `main`
 (`.github/workflows/deploy.yml`, about a minute).
 
+- Commit as Tony Wang <tonywang0321@gmail.com> so commits count on his GitHub profile: run
+  `git config user.name "Tony Wang" && git config user.email "tonywang0321@gmail.com"` before committing.
 - After finishing a change, verify it (`npx tsc --noEmit`, `npx eslint src`, and the preview), then commit with a
   descriptive message and push `main` so the link stays current.
 - Backstop: a Stop hook (`.claude/hooks/auto-deploy.sh`) commits and pushes any leftover changes when a turn ends,
