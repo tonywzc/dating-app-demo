@@ -204,6 +204,11 @@ export function MainApp({
             onOpenChat={() => openThread(pick.id)}
             onReadAgain={() => push({ kind: "person", personId: pick.id })}
             onSeeAnother={seeAnother}
+            distance={settings.distance}
+            onDistance={(distance) => {
+              setSettings((st) => ({ ...st, distance }));
+              notify({ title: distance === "Anywhere" ? "Anywhere nearby" : `Within ${distance}`, body: "Your next introductions will use this.", muse: true });
+            }}
           />
         )}
         {tab === "nearby" && (

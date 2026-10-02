@@ -8,7 +8,9 @@ import { TAB_BAR_SPACE } from "@/components/app/TabBar";
 import { HeartIcon } from "@/components/photos/StoryScan";
 import { Button } from "@/components/ui/Button";
 import { Photo } from "@/components/ui/Photo";
-import { BookIcon, ChatBubbleIcon, CloseIcon, PeopleIcon, ReplayIcon } from "@/components/ui/icons";
+import { BookIcon, ChatBubbleIcon, CloseIcon, PeopleIcon, ReplayIcon, SlidersIcon } from "@/components/ui/icons";
+import { DistanceSheet } from "./DistanceSheet";
+import { PassSheet } from "./PassSheet";
 import { ProfileBook } from "./ProfileBook";
 
 export type TodayDecision = "interested" | "passed" | null;
@@ -49,19 +51,37 @@ export function TodayTab({
   onOpenChat,
   onReadAgain,
   onSeeAnother,
+  distance,
+  onDistance,
 }: {
+  distance: string;
+  onDistance: (d: string) => void;
   person: Person;
   decision: TodayDecision;
   mutual: boolean;
   plus: boolean;
   extrasLeft: number;
   onInterested: () => void;
-  onPass: () => void;
+  onPass: (reason?: string) => void;
   onUndoPass: () => void;
   onOpenChat: () => void;
   onReadAgain: () => void;
   onSeeAnother: () => void;
 }) {
+  const [sheet, setSheet] = useState<"pass" | "distance" | null>(null);
+  const filterButton = (
+    <motion.button
+      type="button"
+      aria-label={`Distance: ${distance}`}
+      whileTap={{ scale: 0.92 }}
+      onClick={() => setSheet("distance")}
+      className="flex h-[44px] items-center gap-2 rounded-full bg-black/40 px-4 text-[15px] font-semibold backdrop-blur-md"
+    >
+      <SlidersIcon size={18} />
+      {distance}
+    </motion.button>
+  );
+
   return (
     <div className="absolute inset-0 bg-[#0A0810]">
       <AnimatePresence mode="wait" initial={false}>
@@ -77,6 +97,7 @@ export function TodayTab({
               onReadAgain={onReadAgain}
               onUndoPass={onUndoPass}
               onSeeAnother={onSeeAnother}
+              filterButton={filterButton}
             />
           </motion.div>
         ) : (
@@ -86,6 +107,7 @@ export function TodayTab({
               variant="today"
               bottomSpace={`calc(${TAB_BAR_SPACE} + 110px)`}
               label={<span className="rounded-full bg-black/40 px-4 py-[8px] text-[15px] font-semibold backdrop-blur-md">Today</span>}
+              topRight={filterButton}
             />
 
             <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-[230px] bg-gradient-to-t from-[#0A0810] via-[#0A0810]/85 to-transparent" />
@@ -93,7 +115,7 @@ export function TodayTab({
               <motion.button
                 type="button"
                 aria-label="Pass"
-                onClick={onPass}
+                onClick={() => setSheet("pass")}
                 whileTap={{ scale: 0.92 }}
                 className="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-full border border-white/15 bg-[#1C1A24]/80 text-white/85 backdrop-blur-xl"
               >
@@ -116,6 +138,17 @@ export function TodayTab({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PassSheet
+        open={sheet === "pass"}
+        person={person}
+        onClose={() => setSheet(null)}
+        onPass={(reason) => {
+          setSheet(null);
+          onPass(reason);
+        }}
+      />
+      <DistanceSheet open={sheet === "distance"} value={distance} onChange={onDistance} onClose={() => setSheet(null)} />
     </div>
   );
 }
@@ -130,7 +163,9 @@ function AfterDecision({
   onReadAgain,
   onUndoPass,
   onSeeAnother,
+  filterButton,
 }: {
+  filterButton: React.ReactNode;
   person: Person;
   decision: NonNullable<TodayDecision>;
   mutual: boolean;
@@ -152,7 +187,10 @@ function AfterDecision({
         style={{ background: "radial-gradient(80% 70% at 50% 0%, rgba(255,95,134,0.24), rgba(106,75,255,0.1) 55%, transparent)" }}
       />
       <div className="no-scrollbar pt-safe relative h-full overflow-y-auto px-5" style={{ paddingBottom: `calc(${TAB_BAR_SPACE} + 24px)` }}>
-        <h1 className="pt-3 text-[34px] font-bold tracking-[-0.03em]">Today</h1>
+        <div className="flex items-center justify-between pt-3">
+          <h1 className="text-[34px] font-bold tracking-[-0.03em]">Today</h1>
+          {filterButton}
+        </div>
 
         <div className="mt-8 flex flex-col items-center text-center">
           <motion.div className="relative" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring", stiffness: 260, damping: 20 }}>

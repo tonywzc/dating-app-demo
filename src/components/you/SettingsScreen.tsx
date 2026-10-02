@@ -10,6 +10,7 @@ import { PLUS_PRICE } from "@/components/app/PlusSheet";
 import { BrandMark } from "@/components/brand/BrandMark";
 import { SystemAlert, type AlertSpec } from "@/components/ios/SystemAlert";
 import { LegalSheet, type LegalDoc } from "@/components/onboarding/LegalSheet";
+import { DistanceSheet } from "@/components/today/DistanceSheet";
 import { Avatar } from "@/components/ui/Avatar";
 import { InstagramGlyph } from "@/components/ui/InstagramGlyph";
 import { Toggle } from "@/components/ui/Toggle";
@@ -18,6 +19,8 @@ import { BellIcon, CalendarIcon, CheckIcon, ChevronRight, EyeIcon, HelpIcon, Loc
 
 export type Settings = {
   calendar: string | null;
+  /** How far Today looks for introductions. */
+  distance: string;
   shareDates: boolean;
   showOnToday: boolean;
   paused: boolean;
@@ -37,6 +40,7 @@ const NOTIFY: { key: NotifyKey; label: string }[] = [
 
 export const DEFAULT_SETTINGS: Settings = {
   calendar: null,
+  distance: "25 km",
   shareDates: true,
   showOnToday: true,
   paused: false,
@@ -72,6 +76,7 @@ export function SettingsScreen({
   const [page, setPage] = useState<Page | null>(null);
   const [legal, setLegal] = useState<LegalDoc | null>(null);
   const [alert, setAlert] = useState<AlertSpec | null>(null);
+  const [distanceOpen, setDistanceOpen] = useState(false);
   const set = (patch: Partial<Settings>) => onChange({ ...settings, ...patch });
 
   const logOut = () =>
@@ -173,6 +178,7 @@ export function SettingsScreen({
                 <SubPage title="Discovery">
                   <Row label="Show me in Today" right={<Toggle on={settings.showOnToday} label="Show me in Today" onChange={(v) => set({ showOnToday: v })} />} />
                   <Row label="Show me on Nearby" right={<Toggle on={nearbyOn} label="Show me on Nearby" onChange={onNearby} />} />
+                  <Row label="Distance" value={settings.distance} onPress={() => setDistanceOpen(true)} />
                   <Row label="Ages" value="27–35" />
                   <Row label="Pause my profile" right={<Toggle on={settings.paused} label="Pause my profile" onChange={(v) => set({ paused: v })} />} />
                 </SubPage>
@@ -202,6 +208,7 @@ export function SettingsScreen({
         )}
       </AnimatePresence>
 
+      <DistanceSheet open={distanceOpen} value={settings.distance} onChange={(d) => set({ distance: d })} onClose={() => setDistanceOpen(false)} />
       <LegalSheet doc={legal} onClose={() => setLegal(null)} />
       <SystemAlert alert={alert} />
     </div>
