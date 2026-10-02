@@ -32,8 +32,8 @@ const TYPING_DELAY = 900;
 const REPLY_DELAY = 2300;
 const ANSWER_DELAY = 1500;
 const BOOKING_MS = 3600;
-/** Today's introduction "replies" this long after you say you'd like to meet. */
-export const MUTUAL_DELAY = 7000;
+/** Today's introduction says yes this long after you start the first talk. */
+const MUTUAL_DELAY = 7000;
 
 const SLOT: Record<string, { day: number; time: string }> = {
   "Thu evening": { day: 4, time: "7:30 PM" },
@@ -43,7 +43,7 @@ const SLOT: Record<string, { day: number; time: string }> = {
 };
 
 /** "Fri, Oct 3 · 7:30 PM" for the next such slot after today. */
-export function slotLabel(slot: string) {
+function slotLabel(slot: string) {
   const { day, time } = SLOT[slot] ?? SLOT["Fri evening"];
   const date = new Date();
   date.setDate(date.getDate() + (((day - date.getDay() + 7) % 7) || 7));
@@ -211,11 +211,11 @@ export function useChats({
 
   const remove = useCallback((tid: string) => setThreads((list) => list.filter((t) => t.id !== tid)), []);
 
-  /** One tap: say you'd like to meet someone. The chat exists right away; Today's introduction answers after a moment. */
+  /** One tap starts the first talk: the chat exists right away, and today's introduction answers after a moment. */
   const expressInterest = useCallback(
     ({ personId, origin, onMutual }: { personId: string; origin: Origin; onMutual?: () => void }) => {
       const person = PEOPLE[personId];
-      const tid = ensure(personId, origin, "youLiked", { id: msgId(), kind: "divider", text: `You'd like to meet ${person.name}` });
+      const tid = ensure(personId, origin, "youLiked", { id: msgId(), kind: "divider", text: "You started the first talk" });
       // People already open to chatting on Nearby match right away.
       if (person.nearby?.status === "chat" || person.nearby?.status === "interested") {
         becomeMutual(tid, "You matched");

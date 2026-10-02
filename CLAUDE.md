@@ -14,6 +14,7 @@
   photo, then Looking for, The details and "Ask them about". Leave the full stories for the first talk. Photos should
   include the person, and every profile photo opens full screen on tap or long press.
 - Tab bar: icons only, no labels.
+- Everyone is part of Introductions (no opt-out toggle); Nearby is the only opt-in surface.
 - Twine Plus ($9.99/mo): Plan a date, Host an event, and +3 extra introductions a week (10 vs 7).
   The first try of each says it's a Plus feature, free "because you're in demo mode :)"; the second try shows the upsell.
 

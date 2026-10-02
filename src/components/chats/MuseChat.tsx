@@ -94,7 +94,7 @@ export function MuseChat({
             type="button"
             whileTap={{ scale: 0.94 }}
             onClick={onTalk}
-            className="flex h-[36px] items-center gap-[6px] rounded-full bg-white/10 px-3 text-[14px] font-semibold"
+            className="flex h-[44px] items-center gap-[6px] rounded-full bg-white/10 px-4 text-[15px] font-semibold"
           >
             <MicIcon size={15} /> Talk
           </motion.button>
@@ -111,7 +111,7 @@ export function MuseChat({
               <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-start gap-3 p-4 text-left">
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-semibold uppercase tracking-[0.07em] text-white/50">About you</span>
-                  <span className={`mt-1 block text-[15px] leading-[21px] text-white/90 ${open ? "" : "line-clamp-2"}`}>{summary.essence}</span>
+                  <span className={`mt-1 text-[15px] leading-[21px] text-white/90 ${open ? "block" : "line-clamp-2"}`}>{summary.essence}</span>
                 </span>
                 <motion.span animate={{ rotate: open ? 90 : 0 }} className="mt-[22px] text-white/45">
                   <ChevronRight size={14} />
@@ -187,7 +187,7 @@ export function MuseChat({
       <div className="pb-safe relative border-t border-white/[0.06] bg-[#0A0810] pt-2">
         <div className="no-scrollbar mb-2 flex gap-2 overflow-x-auto px-3">
           {prompts(pick.name).map((p) => (
-            <button key={p} type="button" onClick={() => send(p)} className="shrink-0 rounded-full border border-white/12 bg-white/[0.05] px-3 py-[6px] text-[14px] text-white/80 active:bg-white/10">
+            <button key={p} type="button" onClick={() => send(p)} className="h-[44px] shrink-0 rounded-full border border-white/12 bg-white/[0.05] px-4 text-[15px] text-white/80 active:bg-white/10">
               {p}
             </button>
           ))}
@@ -204,10 +204,10 @@ export function MuseChat({
             onChange={(e) => setText(e.target.value)}
             placeholder={`Message ${muse.name}`}
             aria-label={`Message ${muse.name}`}
-            className="h-[42px] min-w-0 flex-1 rounded-full border border-white/15 bg-white/[0.05] px-4 text-[16px] text-white outline-none placeholder:text-white/35 focus:border-white/35"
+            className="h-[48px] min-w-0 flex-1 rounded-full border border-white/15 bg-white/[0.05] px-4 text-[16px] text-white outline-none placeholder:text-white/35 focus:border-white/35"
           />
           {text.trim() ? (
-            <button type="submit" aria-label="Send" className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#FF3F6E]">
+            <button type="submit" aria-label="Send" className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-[#FF3F6E]">
               <SendIcon size={18} />
             </button>
           ) : (
@@ -215,7 +215,7 @@ export function MuseChat({
               type="button"
               aria-label={`Talk to ${muse.name}`}
               onClick={onTalk}
-              className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full"
+              className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full"
               style={{ background: `linear-gradient(135deg, ${BRAND.colors.rose}, ${BRAND.colors.violet})` }}
             >
               <MicIcon size={19} />

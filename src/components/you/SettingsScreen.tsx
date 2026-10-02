@@ -22,7 +22,6 @@ export type Settings = {
   /** How far Today looks for introductions. */
   distance: string;
   shareDates: boolean;
-  showOnToday: boolean;
   paused: boolean;
   hideFromKnown: boolean;
   notify: Record<NotifyKey, boolean>;
@@ -31,7 +30,7 @@ export type Settings = {
 type NotifyKey = "intro" | "messages" | "interest" | "nearby" | "dates";
 
 const NOTIFY: { key: NotifyKey; label: string }[] = [
-  { key: "intro", label: "Today's introduction" },
+  { key: "intro", label: "Daily introduction" },
   { key: "messages", label: "Messages" },
   { key: "interest", label: "Someone's into you" },
   { key: "nearby", label: "Events nearby" },
@@ -42,7 +41,6 @@ export const DEFAULT_SETTINGS: Settings = {
   calendar: null,
   distance: "15 mi",
   shareDates: true,
-  showOnToday: true,
   paused: false,
   hideFromKnown: true,
   notify: { intro: true, messages: true, interest: true, nearby: false, dates: true },
@@ -176,7 +174,6 @@ export function SettingsScreen({
               )}
               {page === "discovery" && (
                 <SubPage title="Discovery">
-                  <Row label="Show me in Today" right={<Toggle on={settings.showOnToday} label="Show me in Today" onChange={(v) => set({ showOnToday: v })} />} />
                   <Row label="Show me on Nearby" right={<Toggle on={nearbyOn} label="Show me on Nearby" onChange={onNearby} />} />
                   <Row label="Distance" value={settings.distance} onPress={() => setDistanceOpen(true)} />
                   <Row label="Ages" value="27–35" />

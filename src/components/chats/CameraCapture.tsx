@@ -66,7 +66,7 @@ export function CameraCapture({ to, onSend, onClose }: { to: string; onSend: (me
         </AnimatePresence>
 
         <div className="pt-safe absolute inset-x-0 top-0 flex items-center justify-between px-4">
-          <button type="button" aria-label="Close camera" onClick={onClose} className="flex h-[40px] w-[40px] items-center justify-center rounded-full bg-black/40 backdrop-blur">
+          <button type="button" aria-label="Close camera" onClick={onClose} className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-black/40 backdrop-blur">
             <CloseIcon size={14} />
           </button>
           {recording && (

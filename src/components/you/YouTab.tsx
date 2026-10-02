@@ -25,7 +25,7 @@ import { Toggle } from "@/components/ui/Toggle";
 export type Me = { fields: Field[]; interests: string[]; moments: Moment[]; story: StoryChapter[]; showMutuals: boolean };
 
 /** Friends you share with people you meet, and the vouch one of them wrote for you. */
-export const MY_MUTUALS: MutualFriends = {
+const MY_MUTUALS: MutualFriends = {
   count: 5,
   avatars: [
     "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=70",
@@ -43,7 +43,7 @@ export const MY_MUTUALS: MutualFriends = {
 const field = (fields: Field[], id: string) => fields.find((f) => f.id === id)?.value ?? "";
 
 /** You, in the same book layout others see in Today. */
-export function selfAsPerson(me: Me, summary: Summary): Person {
+function selfAsPerson(me: Me, summary: Summary): Person {
   const birthday = field(me.fields, "birthday");
   const section = (title: string) => summary.sections.find((s) => s.title === title)?.items ?? [];
   return {
@@ -229,7 +229,7 @@ export function YouTab({
                 <span className="min-w-0 flex-1">
                   <span className="block text-[13px] font-semibold uppercase tracking-[0.06em] text-[#FF8AA2]">{c.title}</span>
                   <span className="block truncate text-[16px] font-semibold">{c.headline}</span>
-                  <span className="line-clamp-2 block text-[14px] leading-[19px] text-white/55">{c.text}</span>
+                  <span className="line-clamp-2 text-[14px] leading-[19px] text-white/55">{c.text}</span>
                 </span>
                 <ChevronRight className="shrink-0 text-white/30" />
               </motion.button>
@@ -312,7 +312,7 @@ export function YouTab({
                   exit={{ scale: 0.6, opacity: 0 }}
                   onClick={() => onChange({ ...me, interests: me.interests.filter((t) => t !== tag) })}
                   aria-label={`Remove ${tag}`}
-                  className="flex h-[36px] items-center gap-[6px] rounded-full bg-white/[0.09] pl-4 pr-3 text-[15px] active:bg-white/15"
+                  className="flex h-[44px] items-center gap-[6px] rounded-full bg-white/[0.09] pl-4 pr-3 text-[15px] active:bg-white/15"
                 >
                   {tag}
                   <CloseIcon size={9} strokeWidth={2.6} className="opacity-50" />
@@ -323,7 +323,7 @@ export function YouTab({
               layout
               type="button"
               onClick={() => setEditing({ interest: true })}
-              className="flex h-[36px] items-center gap-[6px] rounded-full border border-dashed border-white/30 px-4 text-[15px] text-white/75 active:bg-white/5"
+              className="flex h-[44px] items-center gap-[6px] rounded-full border border-dashed border-white/30 px-4 text-[15px] text-white/75 active:bg-white/5"
             >
               <span className="text-[18px] leading-none">+</span> Add
             </motion.button>

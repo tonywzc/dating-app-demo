@@ -10,7 +10,7 @@ npm run dev -- -p 3100
 - Real iPhone: open the same URL on your phone (same network, use your Mac's IP). The frame drops away and the app fills the screen; "Add to Home Screen" makes it look like an installed app.
 - `?speed=0.25` plays the launch animation in slow motion.
 - `?start=permissions` jumps to a screen: `accounts`, `settingUp`, `permissions`, `allSet`, `about`, `muse`, `stories`, `app`.
-- `?start=app&tab=nearby` opens the main app on a tab: `today`, `nearby`, `chats`, `you`.
+- `?start=app&tab=nearby` opens the main app on a tab: `today` (Introductions), `nearby`, `chats`, `you`.
 - On desktop, the frame's Action Button (upper left side of the phone) is pressable: hold it during the voice-shortcut "Try it" step.
 
 ## What's in it

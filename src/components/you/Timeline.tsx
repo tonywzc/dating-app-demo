@@ -54,7 +54,7 @@ export function Timeline({ entries, onCheckIn }: { entries: TimelineEntry[]; onC
               type="button"
               aria-pressed={on}
               onClick={() => setKind(k.id)}
-              className={`flex h-[40px] shrink-0 items-center gap-[6px] rounded-full px-4 text-[15px] font-medium ${on ? "bg-white text-black" : "bg-white/[0.08] text-white/80"}`}
+              className={`flex h-[44px] shrink-0 items-center gap-[6px] rounded-full px-4 text-[15px] font-medium ${on ? "bg-white text-black" : "bg-white/[0.08] text-white/80"}`}
             >
               {k.label}
               <span className={on ? "text-black/45" : "text-white/40"}>{count(k.id)}</span>

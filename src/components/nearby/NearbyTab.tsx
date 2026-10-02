@@ -127,7 +127,7 @@ export function NearbyTab({
                 aria-pressed={on}
                 animate={f.id === "twine" && bump ? { scale: [1, 1.18, 1] } : undefined}
                 transition={{ duration: 0.4 }}
-                className={`relative flex h-[40px] shrink-0 items-center gap-[6px] rounded-full border px-4 text-[15px] font-medium backdrop-blur-xl transition-colors ${
+                className={`relative flex h-[44px] shrink-0 items-center gap-[6px] rounded-full border px-4 text-[15px] font-medium backdrop-blur-xl transition-colors ${
                   on ? "border-transparent bg-white text-black" : "border-white/12 bg-[#1C1A24]/75 text-white/85"
                 }`}
               >

@@ -219,7 +219,7 @@ export function PermissionsFlow({ onComplete, onSkip }: { onComplete: () => void
           <button
             type="button"
             onClick={confirmSkip}
-            className="absolute right-4 top-[calc(var(--safe-top)+6px)] z-10 h-[36px] rounded-full bg-white/10 px-4 text-[15px] font-semibold text-white/80 backdrop-blur-xl active:opacity-60"
+            className="absolute right-4 top-[calc(var(--safe-top)+6px)] z-10 h-[44px] rounded-full bg-white/10 px-4 text-[15px] font-semibold text-white/80 backdrop-blur-xl active:opacity-60"
           >
             Skip
           </button>

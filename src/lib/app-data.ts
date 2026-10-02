@@ -429,8 +429,6 @@ const NEARBY_ONLY: Person[] = [
   }),
 ];
 
-export const TODAYS_PICK = MAYA;
-
 export const PEOPLE: Record<string, Person> = Object.fromEntries(
   [MAYA, NADIA, SOFIA, HANA, ELENA, CHLOE, PRIYA, ...NEARBY_ONLY].map((p) => [p.id, p]),
 );
@@ -691,7 +689,7 @@ export const MUSE_HINTS: Record<string, string> = {
   hana: "Into cooking, like you",
   priya: "Gone quiet since Monday. Send a nudge?",
   chloe: "Hasn't seen your message yet",
-  maya: "Today's introduction",
+  maya: "Your introduction today",
 };
 
 export const THEIR_WHEN = ["Fri evening", "Sat daytime"];

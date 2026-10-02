@@ -160,20 +160,6 @@ export function BookIcon({ size = 18, className, strokeWidth = 2 }: IconProps) {
 
 // ---------- Tab bar ----------
 
-export function TodayTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
-  // A single card with Muse's spark: one person, chosen for you.
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-      <rect x="5" y="3.5" width="18" height="21" rx="4.5" fill={active ? "currentColor" : "none"} />
-      <path
-        d="M14 9.2c.3 0 .5.2.6.5l.5 2.1c.2.7.7 1.2 1.4 1.4l2.1.5c.3.1.5.3.5.6s-.2.5-.5.6l-2.1.5c-.7.2-1.2.7-1.4 1.4l-.5 2.1c-.1.3-.3.5-.6.5s-.5-.2-.6-.5l-.5-2.1c-.2-.7-.7-1.2-1.4-1.4l-2.1-.5c-.3-.1-.5-.3-.5-.6s.2-.5.5-.6l2.1-.5c.7-.2 1.2-.7 1.4-1.4l.5-2.1c.1-.3.3-.5.6-.5z"
-        fill={active ? "#0B0A10" : "currentColor"}
-        stroke="none"
-      />
-    </svg>
-  );
-}
-
 export function NearbyTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
@@ -222,13 +208,6 @@ export function PeopleIcon({ size = 20, className, strokeWidth = 2 }: IconProps)
   );
 }
 
-export function HeartIconLine({ size = 20, className, strokeWidth = 2 }: IconProps) {
-  return (
-    <svg {...line(size, strokeWidth, className)}>
-      <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.3a4.3 4.3 0 017.5 2.5C19.5 15.4 12 20 12 20z" />
-    </svg>
-  );
-}
 
 export function BellIcon({ size = 20, className, strokeWidth = 2 }: IconProps) {
   return (
@@ -299,16 +278,6 @@ export function ChevronDownIcon({ size = 18, className, strokeWidth = 2.4 }: Ico
   );
 }
 
-/** Two interlocking rings: a match, made with intent. */
-export function RingsTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth={active ? 2.6 : 2}>
-      <circle cx="10.5" cy="15" r="6.5" />
-      <circle cx="17.5" cy="15" r="6.5" />
-      <path d="M12.2 5.5l1.8-2 1.8 2-1.8 1.6z" fill={active ? "currentColor" : "none"} strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 export function ClockIcon({ size = 16, className, strokeWidth = 2.2 }: IconProps) {
   return (

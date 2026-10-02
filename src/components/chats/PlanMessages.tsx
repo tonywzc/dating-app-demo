@@ -131,7 +131,7 @@ export function MuseVenues({ venues, picked, them, onPick }: { venues: Venue[]; 
               </div>
               <p className="mt-2 text-[13px] leading-[18px] text-white/75">{v.why}</p>
               {mine ? (
-                <div className="mt-3 flex h-[36px] items-center justify-center gap-1 rounded-full bg-white text-[14px] font-semibold text-black">
+                <div className="mt-3 flex h-[44px] items-center justify-center gap-1 rounded-full bg-white text-[14px] font-semibold text-black">
                   <CheckIcon size={12} /> Your pick
                 </div>
               ) : (
@@ -139,7 +139,7 @@ export function MuseVenues({ venues, picked, them, onPick }: { venues: Venue[]; 
                   type="button"
                   disabled={Boolean(picked)}
                   onClick={() => onPick(v)}
-                  className="mt-3 h-[36px] w-full rounded-full bg-white/10 text-[14px] font-semibold active:bg-white/20 disabled:active:bg-white/10"
+                  className="mt-3 h-[44px] w-full rounded-full bg-white/10 text-[14px] font-semibold active:bg-white/20 disabled:active:bg-white/10"
                 >
                   Pick this
                 </button>
@@ -234,10 +234,10 @@ export function DateTicket({ booking, them }: { booking: Booking; them: string }
           </span>
         </div>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <button type="button" className="flex h-[40px] items-center justify-center gap-[6px] rounded-full bg-black/[0.06] text-[14px] font-semibold active:bg-black/10">
+          <button type="button" className="flex h-[44px] items-center justify-center gap-[6px] rounded-full bg-black/[0.06] text-[14px] font-semibold active:bg-black/10">
             <PinIcon size={14} /> Directions
           </button>
-          <button type="button" className="flex h-[40px] items-center justify-center gap-[6px] rounded-full bg-black/[0.06] text-[14px] font-semibold active:bg-black/10">
+          <button type="button" className="flex h-[44px] items-center justify-center gap-[6px] rounded-full bg-black/[0.06] text-[14px] font-semibold active:bg-black/10">
             <CalendarIcon size={14} /> Open calendar
           </button>
         </div>

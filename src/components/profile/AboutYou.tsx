@@ -98,7 +98,7 @@ export function AboutYou({ onDone }: { onDone: (profile: ProfileBasics) => void 
                     exit={{ scale: 0.6, opacity: 0 }}
                     onClick={() => setInterests((list) => list.filter((t) => t !== tag))}
                     aria-label={`Remove ${tag}`}
-                    className="flex h-[36px] items-center gap-[6px] rounded-full bg-white/[0.09] pl-4 pr-3 text-[15px] active:bg-white/15"
+                    className="flex h-[44px] items-center gap-[6px] rounded-full bg-white/[0.09] pl-4 pr-3 text-[15px] active:bg-white/15"
                   >
                     {tag}
                     <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" className="opacity-50">
@@ -111,7 +111,7 @@ export function AboutYou({ onDone }: { onDone: (profile: ProfileBasics) => void 
                 layout
                 type="button"
                 onClick={() => setEditing({ interest: true })}
-                className="flex h-[36px] items-center gap-[6px] rounded-full border border-dashed border-white/30 px-4 text-[15px] text-white/75 active:bg-white/5"
+                className="flex h-[44px] items-center gap-[6px] rounded-full border border-dashed border-white/30 px-4 text-[15px] text-white/75 active:bg-white/5"
               >
                 <span className="text-[18px] leading-none">+</span> Add
               </motion.button>
