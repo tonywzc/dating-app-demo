@@ -16,12 +16,12 @@ import { MaskGlyph, NearbyMap, type MapFilter, type Point } from "./NearbyMap";
 import { PersonPeek } from "./PersonPeek";
 import { PersonSheet } from "./PersonSheet";
 
+// No "All" chip: tap a selected chip again to clear it.
 const FILTERS: { id: MapFilter; label: string }[] = [
-  { id: "all", label: "All" },
+  { id: "interested", label: "Into you" },
+  { id: "active", label: "Active now" },
   { id: "twine", label: "Twine events" },
   { id: "blind", label: "Blind dates" },
-  { id: "active", label: "Active now" },
-  { id: "interested", label: "Into you" },
 ];
 
 /** Casual and spontaneous: who's around, what's on, and who'd like to chat. Opt-in. */
@@ -71,14 +71,21 @@ export function NearbyTab({
     return { x: (c.left + c.width / 2 - (t.left + t.width / 2)) / scale, y: (c.top + c.height / 2 - (t.top + t.height / 2)) / scale };
   };
   const hideTray = () => {
-    setFold(measureFold());
-    setTray(false);
-    setTimeout(() => setBump((b) => b + 1), 520);
+    // Bring the Twine events chip into view first, so the tray has somewhere to land.
+    const chip = twineChip.current;
+    const row = chip?.parentElement;
+    if (chip && row) row.scrollTo({ left: Math.max(0, chip.offsetLeft - 60), behavior: "smooth" });
+    setTimeout(() => {
+      setFold(measureFold());
+      setTray(false);
+      setTimeout(() => setBump((b) => b + 1), 520);
+    }, 180);
   };
   const pickFilter = (f: MapFilter) => {
-    setFilter(f);
+    const next = filter === f ? "all" : f;
+    setFilter(next);
     setSeen((s) => new Set(s).add(f));
-    if (f === "twine" || f === "blind") setTray(true);
+    if (next === "twine" || next === "blind") setTray(true);
   };
 
   const events = [...hosted, ...NEARBY_EVENTS];

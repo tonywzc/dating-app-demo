@@ -1,21 +1,38 @@
 "use client";
 
 import { motion } from "motion/react";
-import { ChatsTabIcon, NearbyTabIcon, RingsTabIcon, YouTabIcon } from "@/components/ui/icons";
+import { ChatsTabIcon, CupidTabIcon, NearbyTabIcon, YouTabIcon } from "@/components/ui/icons";
 
 export type Tab = "today" | "nearby" | "chats" | "you";
 
 export const TABS: { id: Tab; label: string; Icon: (p: { active: boolean }) => React.ReactNode }[] = [
-  { id: "today", label: "Introductions", Icon: RingsTabIcon },
+  { id: "today", label: "Introductions", Icon: CupidTabIcon },
   { id: "nearby", label: "Nearby", Icon: NearbyTabIcon },
   { id: "chats", label: "Chats", Icon: ChatsTabIcon },
   { id: "you", label: "You", Icon: YouTabIcon },
 ];
 
 /** iOS 26-style floating glass tab bar. */
-export function TabBar({ tab, onSelect, badges }: { tab: Tab; onSelect: (tab: Tab) => void; badges: Partial<Record<Tab, number | "dot">> }) {
+export function TabBar({
+  tab,
+  onSelect,
+  badges,
+  hidden = false,
+}: {
+  tab: Tab;
+  onSelect: (tab: Tab) => void;
+  badges: Partial<Record<Tab, number | "dot">>;
+  /** Slide away (e.g. while reading a profile). */
+  hidden?: boolean;
+}) {
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-[18px]" style={{ paddingBottom: "max(calc(var(--safe-bottom) - 8px), 10px)" }}>
+    <motion.div
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-30 px-[18px]"
+      style={{ paddingBottom: "max(calc(var(--safe-bottom) - 8px), 10px)" }}
+      initial={false}
+      animate={{ y: hidden ? 130 : 0, opacity: hidden ? 0 : 1 }}
+      transition={{ type: "spring", stiffness: 380, damping: 36 }}
+    >
       <nav
         className="pointer-events-auto relative flex h-[62px] items-center rounded-full border border-white/[0.12] px-[6px] shadow-[0_12px_40px_rgba(0,0,0,0.45)]"
         style={{ background: "rgba(28,26,36,0.72)", backdropFilter: "blur(24px) saturate(1.6)", WebkitBackdropFilter: "blur(24px) saturate(1.6)" }}
@@ -55,7 +72,7 @@ export function TabBar({ tab, onSelect, badges }: { tab: Tab; onSelect: (tab: Ta
           );
         })}
       </nav>
-    </div>
+    </motion.div>
   );
 }
 

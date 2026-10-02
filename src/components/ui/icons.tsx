@@ -326,3 +326,20 @@ export function MoonIcon({ size = 16, className, strokeWidth = 2.2 }: IconProps)
     </svg>
   );
 }
+
+/** A heart with Cupid's arrow through it, for Introductions. */
+export function CupidTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path
+        d="M14 22.5s-7.5-4.6-7.5-10.4A4.2 4.2 0 0114 9.6a4.2 4.2 0 017.5 2.5c0 5.8-7.5 10.4-7.5 10.4z"
+        fill={active ? "currentColor" : "none"}
+      />
+      {/* The arrow: shaft, head (top right) and fletching (bottom left) */}
+      <path d="M4 24L24.5 4.5" stroke={active ? "#0B0A10" : "currentColor"} strokeWidth={active ? 3.6 : 0} />
+      <path d="M4 24L24.5 4.5" />
+      <path d="M19.5 4.5h5v5" />
+      <path d="M4 20v4h4M6.5 18.5v3h3" />
+    </svg>
+  );
+}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { MUSE_HINTS, PEOPLE, type Interest, type Message, type Thread } from "@/lib/app-data";
-import { ChatBubbleIcon, ClockIcon, MoonIcon, SparkleIcon } from "@/components/ui/icons";
+import { ChatBubbleIcon, CheckIcon, ChevronDownIcon, ClockIcon, CloseIcon, MoonIcon, SparkleIcon } from "@/components/ui/icons";
 import type { Muse } from "@/lib/mock-data";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
 import { MuseAvatar } from "@/components/muse/MuseAvatar";
@@ -11,14 +11,28 @@ import { HeartIcon } from "@/components/photos/StoryScan";
 import { TopFade } from "@/components/ui/TopFade";
 import { Photo } from "@/components/ui/Photo";
 
-type Filter = "all" | Interest;
+type Who = "all" | Interest;
+type Reply = "any" | "respond" | "waiting";
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: "all", label: "All" },
+const WHO: { id: Who; label: string }[] = [
+  { id: "all", label: "Everyone" },
   { id: "mutual", label: "Mutual" },
   { id: "likesYou", label: "Into you" },
   { id: "youLiked", label: "You're into" },
 ];
+
+const REPLY: { id: Reply; label: string }[] = [
+  { id: "any", label: "Any" },
+  { id: "respond", label: "Need to respond" },
+  { id: "waiting", label: "Waiting for reply" },
+];
+
+/** Whose turn it is: the last message is theirs (you need to respond) or yours (you're waiting). */
+function turnOf(t: Thread): Exclude<Reply, "any"> {
+  if (t.status === "youLiked") return "waiting";
+  const last = [...t.messages].reverse().find((m) => "from" in m);
+  return last && "from" in last && last.from === "me" ? "waiting" : "respond";
+}
 
 type Bucket = "reply" | "look" | "waiting" | "quiet";
 
@@ -85,9 +99,13 @@ export function ChatsTab({
   onSort: () => void;
   onUnsort: () => void;
 }) {
-  const [filter, setFilter] = useState<Filter>("all");
-  const count = (f: Filter) => (f === "all" ? threads.length : threads.filter((t) => t.status === f).length);
-  const shown = filter === "all" ? threads : threads.filter((t) => t.status === filter);
+  const [who, setWho] = useState<Who>("all");
+  const [reply, setReply] = useState<Reply>("any");
+  const [menu, setMenu] = useState<"who" | "reply" | null>(null);
+  const matchWho = (t: Thread, w: Who) => w === "all" || t.status === w;
+  const matchReply = (t: Thread, r: Reply) => r === "any" || turnOf(t) === r;
+  const shown = threads.filter((t) => matchWho(t, who) && matchReply(t, reply));
+  const filtered = who !== "all" || reply !== "any";
   const needYou = threads.filter((t) => ["reply", "look"].includes(bucketOf(t))).length;
 
   const museRow = (
@@ -110,30 +128,63 @@ export function ChatsTab({
         <AnimatePresence mode="wait" initial={false}>
           {mode === "list" ? (
             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Filters */}
-              <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-4">
-                {FILTERS.map((f) => {
-                  const on = filter === f.id;
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setFilter(f.id)}
-                      className={`flex h-[40px] shrink-0 items-center gap-[6px] rounded-full px-4 text-[15px] font-medium transition-colors ${
-                        on ? "bg-white text-black" : "bg-white/[0.08] text-white/80"
-                      }`}
-                    >
-                      {f.id === "mutual" && <HeartIcon size={12} color={on ? "#FF3F6E" : "#FF8AA2"} />}
-                      {f.label}
-                      <span className={on ? "text-black/45" : "text-white/40"}>{count(f.id)}</span>
-                    </button>
-                  );
-                })}
+              {/* Filters: two dropdowns */}
+              <div className="relative mt-4 flex gap-2 px-4">
+                {menu && <div className="fixed inset-0 z-20" onClick={() => setMenu(null)} />}
+                <div className="relative z-30">
+                  <FilterChip
+                    label={who === "all" ? "Everyone" : WHO.find((w) => w.id === who)!.label}
+                    icon={<HeartIcon size={12} color={who === "all" ? "#FF8AA2" : "#FF3F6E"} />}
+                    active={who !== "all"}
+                    open={menu === "who"}
+                    onPress={() => setMenu(menu === "who" ? null : "who")}
+                  />
+                  <Menu
+                    open={menu === "who"}
+                    options={WHO.map((o) => ({ ...o, n: threads.filter((t) => matchWho(t, o.id) && matchReply(t, reply)).length }))}
+                    selected={who}
+                    onSelect={(id) => {
+                      setWho(id as Who);
+                      setMenu(null);
+                    }}
+                  />
+                </div>
+                <div className="relative z-30">
+                  <FilterChip
+                    label={reply === "any" ? "Replies" : REPLY.find((r) => r.id === reply)!.label}
+                    icon={<ChatBubbleIcon size={12} />}
+                    active={reply !== "any"}
+                    open={menu === "reply"}
+                    onPress={() => setMenu(menu === "reply" ? null : "reply")}
+                  />
+                  <Menu
+                    open={menu === "reply"}
+                    options={REPLY.map((o) => ({ ...o, n: threads.filter((t) => matchWho(t, who) && matchReply(t, o.id)).length }))}
+                    selected={reply}
+                    onSelect={(id) => {
+                      setReply(id as Reply);
+                      setMenu(null);
+                    }}
+                  />
+                </div>
+                {filtered && (
+                  <button
+                    type="button"
+                    aria-label="Clear filters"
+                    onClick={() => {
+                      setWho("all");
+                      setReply("any");
+                    }}
+                    className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-white/[0.08] text-white/70"
+                  >
+                    <CloseIcon size={12} />
+                  </button>
+                )}
+
               </div>
 
               <div className="mt-3">
-                {filter === "all" && museRow}
+                {!filtered && museRow}
                 {shown.map((t) => (
                   <Row key={t.id} thread={t} onPress={() => onOpen(t.id)} />
                 ))}
@@ -214,6 +265,53 @@ function MuseRow({
         )}
       </div>
     </div>
+  );
+}
+
+function Menu({ open, options, selected, onSelect }: { open: boolean; options: { id: string; label: string; n: number }[]; selected: string; onSelect: (id: string) => void }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="absolute left-0 top-[52px] w-[240px] overflow-hidden rounded-[20px] border border-white/10 bg-[#24222C]/95 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+          style={{ transformOrigin: "top left" }}
+          initial={{ opacity: 0, scale: 0.9, y: -6 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 500, damping: 34 }}
+        >
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onSelect(o.id)}
+              className="flex h-[52px] w-full items-center gap-3 border-b border-white/[0.07] px-4 text-left text-[16px] last:border-b-0 active:bg-white/10"
+            >
+              <span className="w-[16px]">{selected === o.id && <CheckIcon size={14} className="text-[#FF8AA2]" />}</span>
+              <span className="flex-1">{o.label}</span>
+              <span className="text-[14px] text-white/40">{o.n}</span>
+            </button>
+          ))}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function FilterChip({ label, icon, active, open, onPress }: { label: string; icon: React.ReactNode; active: boolean; open: boolean; onPress: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-expanded={open}
+      onClick={onPress}
+      className={`flex h-[44px] shrink-0 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors ${active ? "bg-white text-black" : "bg-white/[0.08] text-white/85"}`}
+    >
+      {icon}
+      {label}
+      <motion.span animate={{ rotate: open ? 180 : 0 }} className={active ? "text-black/50" : "text-white/50"}>
+        <ChevronDownIcon size={14} />
+      </motion.span>
+    </button>
   );
 }
 

@@ -30,7 +30,13 @@ export function ProfileBook({
   topLeft,
   bottomSpace,
   showMutuals = true,
+  onScrolled,
+  onChapterIndex,
 }: {
+  /** Whether the current page is scrolled past its top (to shrink overlays). */
+  onScrolled?: (scrolled: boolean) => void;
+  /** Which chapter is showing (0 is the cover). */
+  onChapterIndex?: (index: number) => void;
   /** Show mutual friends and vouches (the person's own privacy setting). */
   showMutuals?: boolean;
   person: Person;
@@ -49,6 +55,11 @@ export function ProfileBook({
   );
   const [[index, dir], setPage] = useState<[number, number]>([0, 0]);
   const chapter = chapters[Math.min(index, chapters.length - 1)];
+
+  useEffect(() => {
+    onChapterIndex?.(index);
+    onScrolled?.(false);
+  }, [index, onChapterIndex, onScrolled]);
 
   const go = (next: number) => {
     if (next < 0 || next >= chapters.length || next === index) return;
@@ -89,7 +100,11 @@ export function ProfileBook({
           className="absolute inset-0 origin-left bg-[#0A0810]"
           style={{ touchAction: "pan-y", boxShadow: "-24px 0 50px rgba(0,0,0,0.55)" }}
         >
-          <div className="no-scrollbar h-full overflow-y-auto" style={{ paddingBottom: bottomSpace }}>
+          <div
+            className="no-scrollbar h-full overflow-y-auto"
+            style={{ paddingBottom: bottomSpace }}
+            onScroll={onScrolled ? (e) => onScrolled(e.currentTarget.scrollTop > 60) : undefined}
+          >
             {chapter.body(index)}
           </div>
         </motion.div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import { PAST_INTROS, PEOPLE, type Person } from "@/lib/app-data";
@@ -50,6 +50,8 @@ export function TodayTab({
   onOpenChat,
   onReadAgain,
   onSeeAnother,
+  onImmersive,
+  immersive,
   distance,
   onDistance,
 }: {
@@ -66,8 +68,16 @@ export function TodayTab({
   onOpenChat: () => void;
   onReadAgain: () => void;
   onSeeAnother: () => void;
+  /** Reading the chapters: the app hides the tab bar. */
+  onImmersive: (immersive: boolean) => void;
+  /** The tab bar is hidden, so the buttons can sit lower. */
+  immersive: boolean;
 }) {
   const [sheet, setSheet] = useState<"pass" | "distance" | null>(null);
+  // Scrolling shrinks the buttons to icons; turning past the cover hides the tab bar.
+  const [compact, setCompact] = useState(false);
+  const onChapterIndex = useCallback((i: number) => onImmersive(i > 0), [onImmersive]);
+  const bottom = immersive ? "calc(max(var(--safe-bottom), 12px) + 8px)" : `calc(${TAB_BAR_SPACE} + 14px)`;
   const filterButton = (
     <motion.button
       type="button"
@@ -107,11 +117,20 @@ export function TodayTab({
               bottomSpace={`calc(${TAB_BAR_SPACE} + 110px)`}
               label={<span className="rounded-full bg-black/40 px-4 py-[10px] text-[15px] font-semibold backdrop-blur-md">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
               topRight={filterButton}
+              onScrolled={setCompact}
+              onChapterIndex={onChapterIndex}
             />
 
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-[230px] bg-gradient-to-t from-[#0A0810] via-[#0A0810]/85 to-transparent" />
-            <div className="absolute inset-x-0 z-20 flex items-center gap-3 px-5" style={{ bottom: `calc(${TAB_BAR_SPACE} + 14px)` }}>
+            <motion.div
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-[230px] bg-gradient-to-t from-[#0A0810] via-[#0A0810]/85 to-transparent"
+              animate={{ opacity: compact ? 0 : 1 }}
+            />
+            <div
+              className={`absolute inset-x-0 z-20 flex items-center gap-3 px-5 transition-[bottom] duration-300 ${compact ? "justify-end" : ""}`}
+              style={{ bottom }}
+            >
               <motion.button
+                layout
                 type="button"
                 aria-label="Pass"
                 onClick={() => setSheet("pass")}
@@ -121,17 +140,22 @@ export function TodayTab({
                 <CloseIcon size={22} strokeWidth={2.6} />
               </motion.button>
               <motion.button
+                layout
                 type="button"
+                aria-label="Start the first talk"
                 onClick={onInterested}
                 whileTap={{ scale: 0.97 }}
-                className="flex h-[60px] flex-1 items-center justify-center gap-2 rounded-full text-[17px] font-semibold"
+                transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                className={`flex h-[60px] items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-full text-[17px] font-semibold ${compact ? "w-[60px]" : "flex-1"}`}
                 style={{
                   background: `linear-gradient(100deg, ${BRAND.colors.rose} 0%, ${BRAND.colors.overlap} 55%, ${BRAND.colors.violet} 100%)`,
                   boxShadow: "0 12px 34px -8px rgba(201,75,216,0.75)",
                 }}
               >
-                <ChatBubbleIcon size={18} />
-                Start the first talk
+                <motion.span layout="position">
+                  <ChatBubbleIcon size={compact ? 22 : 18} />
+                </motion.span>
+                {!compact && <motion.span layout="position">Start the first talk</motion.span>}
               </motion.button>
             </div>
           </motion.div>
