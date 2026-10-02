@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { usePress } from "@/lib/usePress";
 import { animate, motion, useMotionValue } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import { MY_AREA, type NearbyEvent, type Person } from "@/lib/app-data";
@@ -20,8 +21,6 @@ const TILES_Y = [3164, 3165, 3166, 3167, 3168];
 export const MAP_W = TILE * TILES_X.length;
 export const MAP_H = TILE * TILES_Y.length;
 
-const LONG_PRESS_MS = 420;
-const MOVE_SLOP = 8;
 
 export type MapFilter = "all" | "interested" | "active" | "twine" | "blind";
 
@@ -38,49 +37,6 @@ function visibleEvent(e: NearbyEvent, filter: MapFilter) {
   if (filter === "twine") return e.kind === "event" && !e.hosting;
   if (filter === "blind") return e.kind === "blind";
   return filter === "all";
-}
-
-/** Tap, or press and hold, without fighting the map's drag. */
-function usePress(onTap: () => void, onHold?: () => void) {
-  const state = useRef<{ x: number; y: number; timer?: ReturnType<typeof setTimeout>; held: boolean; moved: boolean } | null>(null);
-  const clear = () => {
-    if (state.current?.timer) clearTimeout(state.current.timer);
-  };
-  return {
-    onPointerDown: (e: ReactPointerEvent) => {
-      clear();
-      state.current = { x: e.clientX, y: e.clientY, held: false, moved: false };
-      if (onHold)
-        state.current.timer = setTimeout(() => {
-          if (state.current && !state.current.moved) {
-            state.current.held = true;
-            onHold();
-          }
-        }, LONG_PRESS_MS);
-    },
-    onPointerMove: (e: ReactPointerEvent) => {
-      const s = state.current;
-      if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > MOVE_SLOP) {
-        s.moved = true;
-        clear();
-      }
-    },
-    onPointerUp: () => {
-      const s = state.current;
-      clear();
-      if (s && !s.moved && !s.held) onTap();
-      state.current = null;
-    },
-    onPointerCancel: () => {
-      clear();
-      state.current = null;
-    },
-    onPointerLeave: () => {
-      if (state.current) state.current.moved = true;
-      clear();
-    },
-    onContextMenu: (e: React.MouseEvent) => e.preventDefault(),
-  };
 }
 
 /** A pannable city map with the people and plans near you. */

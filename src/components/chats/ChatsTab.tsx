@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { BRAND } from "@/lib/brand";
 import { MUSE_HINTS, PEOPLE, type Interest, type Message, type Thread } from "@/lib/app-data";
 import { ChatBubbleIcon, ClockIcon, MoonIcon, SparkleIcon } from "@/components/ui/icons";
 import type { Muse } from "@/lib/mock-data";
@@ -67,61 +66,50 @@ export function ChatsTab({
   museLast,
   onOpen,
   onOpenMuse,
+  mode,
+  museUnread,
+  museOffer,
+  onSort,
+  onUnsort,
 }: {
   threads: Thread[];
   muse: Muse;
   museLast: string;
   onOpen: (tid: string) => void;
   onOpenMuse: () => void;
+  /** Muse's sorted view of the inbox (driven by the app, so Muse's chat can start it too). */
+  mode: "list" | "sorting" | "sorted";
+  museUnread: boolean;
+  /** Muse is offering to sort the inbox. */
+  museOffer: boolean;
+  onSort: () => void;
+  onUnsort: () => void;
 }) {
   const [filter, setFilter] = useState<Filter>("all");
-  const [mode, setMode] = useState<"list" | "sorting" | "sorted">("list");
   const count = (f: Filter) => (f === "all" ? threads.length : threads.filter((t) => t.status === f).length);
   const shown = filter === "all" ? threads : threads.filter((t) => t.status === filter);
   const needYou = threads.filter((t) => ["reply", "look"].includes(bucketOf(t))).length;
 
-  const sort = () => {
-    setMode("sorting");
-    setTimeout(() => setMode("sorted"), 1100);
-  };
+  const museRow = (
+    <MuseRow
+      muse={muse}
+      text={mode === "sorted" ? `Sorted. ${needYou} chats need you.` : museOffer ? "Your inbox is getting busy. Want me to sort it?" : museLast}
+      unread={museUnread}
+      action={mode === "sorted" ? { label: "Show all", onPress: onUnsort } : museOffer ? { label: "Sort inbox", onPress: onSort } : undefined}
+      thinking={mode === "sorting"}
+      onOpen={onOpenMuse}
+    />
+  );
 
   return (
     <div className="absolute inset-0 bg-[#0B0A10]">
       <TopFade color="#0B0A10" />
       <div className="no-scrollbar pt-safe relative h-full overflow-y-auto" style={{ paddingBottom: `calc(${TAB_BAR_SPACE} + 24px)` }}>
-        <div className="flex items-center justify-between px-5 pt-2">
-          <h1 className="text-[34px] font-bold tracking-[-0.03em]">Chats</h1>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95 }}
-            onClick={mode === "list" ? sort : () => setMode("list")}
-            aria-pressed={mode !== "list"}
-            className={`flex h-[44px] items-center gap-2 rounded-full py-1 pl-1 pr-4 text-[15px] font-semibold ${mode === "list" ? "bg-white/10" : "bg-white text-black"}`}
-          >
-            <MuseAvatar muse={muse} size={36} mood={mode === "sorting" ? "thinking" : "idle"} />
-            {mode === "list" ? "Sort" : "Done"}
-          </motion.button>
-        </div>
+        <h1 className="px-5 pt-2 text-[34px] font-bold tracking-[-0.03em]">Chats</h1>
 
         <AnimatePresence mode="wait" initial={false}>
           {mode === "list" ? (
             <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {/* Muse offers to sort a busy inbox */}
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.98 }}
-                onClick={sort}
-                className="mx-4 mt-4 flex w-[calc(100%-32px)] items-center gap-3 rounded-[22px] border border-white/10 p-3 text-left"
-                style={{ background: `linear-gradient(110deg, ${BRAND.colors.rose}26, ${BRAND.colors.violet}26)` }}
-              >
-                <MuseAvatar muse={muse} size={44} mood="idle" />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[17px] font-semibold">{needYou} chats need you</span>
-                  <span className="block text-[14px] text-white/60">{muse.name} can sort your inbox</span>
-                </span>
-                <span className="flex h-[40px] items-center rounded-full bg-white px-4 text-[15px] font-semibold text-black">Sort</span>
-              </motion.button>
-
               {/* Filters */}
               <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto px-4">
                 {FILTERS.map((f) => {
@@ -145,15 +133,7 @@ export function ChatsTab({
               </div>
 
               <div className="mt-3">
-                {filter === "all" && (
-                  <motion.button type="button" onClick={onOpenMuse} whileTap={{ backgroundColor: "rgba(255,255,255,0.05)" }} className="flex w-full items-center gap-3 px-4 py-[10px] text-left">
-                    <MuseAvatar muse={muse} size={59} mood="idle" />
-                    <span className="min-w-0 flex-1 border-b border-white/[0.07] pb-[12px] pt-[2px]">
-                      <span className="block text-[17px] font-semibold">{muse.name}</span>
-                      <span className="mt-[2px] block truncate text-[15px] text-white/50">{museLast}</span>
-                    </span>
-                  </motion.button>
-                )}
+                {filter === "all" && museRow}
                 {shown.map((t) => (
                   <Row key={t.id} thread={t} onPress={() => onOpen(t.id)} />
                 ))}
@@ -161,12 +141,13 @@ export function ChatsTab({
               </div>
             </motion.div>
           ) : mode === "sorting" ? (
-            <motion.div key="sorting" className="flex flex-col items-center pt-24" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div key="sorting" className="flex flex-col items-center pt-20" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <MuseAvatar muse={muse} size={88} mood="thinking" />
               <p className="mt-5 text-[17px] font-medium text-white/70">Sorting {threads.length} chats…</p>
             </motion.div>
           ) : (
             <motion.div key="sorted" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <div className="mt-3">{museRow}</div>
               {BUCKETS.map((b, i) => {
                 const items = threads.filter((t) => bucketOf(t) === b.id);
                 if (!items.length) return null;
@@ -186,6 +167,51 @@ export function ChatsTab({
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+/** Muse's cell: her latest message, an unread dot, and an inline action when she's offering one. */
+function MuseRow({
+  muse,
+  text,
+  unread,
+  action,
+  thinking,
+  onOpen,
+}: {
+  muse: Muse;
+  text: string;
+  unread: boolean;
+  action?: { label: string; onPress: () => void };
+  thinking: boolean;
+  onOpen: () => void;
+}) {
+  return (
+    <div className="flex w-full items-start gap-3 px-4 py-[10px]">
+      <button type="button" aria-label={`Open ${muse.name}`} onClick={onOpen} className="shrink-0">
+        <MuseAvatar muse={muse} size={59} mood={thinking ? "thinking" : "idle"} />
+      </button>
+      <div className="min-w-0 flex-1 border-b border-white/[0.07] pb-[12px] pt-[2px]">
+        <button type="button" onClick={onOpen} className="block w-full text-left">
+          <span className="flex items-center gap-2">
+            <span className={`text-[17px] ${unread ? "font-bold" : "font-semibold"}`}>{muse.name}</span>
+            {unread && <span className="ml-auto h-[10px] w-[10px] rounded-full bg-[#FF3F6E]" />}
+          </span>
+          <span className={`mt-[2px] block text-[15px] leading-[20px] ${unread ? "text-white/90" : "text-white/50"}`}>{text}</span>
+        </button>
+        {action && (
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.96 }}
+            onClick={action.onPress}
+            className="mt-2 flex h-[44px] items-center gap-2 rounded-full bg-white/10 px-4 text-[15px] font-semibold active:bg-white/20"
+          >
+            <SparkleIcon size={13} className="text-[#FF8AA2]" />
+            {action.label}
+          </motion.button>
+        )}
       </div>
     </div>
   );

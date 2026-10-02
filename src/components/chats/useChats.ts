@@ -75,7 +75,10 @@ export function useChats({
   calendar,
   onCalendarChosen,
   notify,
+  onBooked,
 }: {
+  /** A date was booked (for the timeline). */
+  onBooked?: (b: { personId: string; venue: Venue; when: string }) => void;
   myName: string;
   calendar: string | null;
   onCalendarChosen: (calendar: string) => void;
@@ -89,12 +92,14 @@ export function useChats({
   const openRef = useRef<string | null>(null);
   const calendarRef = useRef(calendar);
   const notifyRef = useRef(notify);
+  const bookedRef = useRef(onBooked);
   const plans = useRef<Record<string, Plan>>({});
   const threadsRef = useRef(threads);
   const replyIndex = useRef<Record<string, number>>({});
   useEffect(() => {
     calendarRef.current = calendar;
     notifyRef.current = notify;
+    bookedRef.current = onBooked;
     threadsRef.current = threads;
   });
 
@@ -271,6 +276,7 @@ export function useChats({
         push(tid, { id: msgId(), kind: "museBooked", booking: { venue, when, code, calendar: cal } });
         museSays(tid, `All set. I'll remind you both ${dayName(plan.when!)} afternoon.`, 900);
         setTimeout(() => patch(tid, (t) => ({ ...t, planning: false })), 900);
+        bookedRef.current?.({ personId: personOf(tid).id, venue, when });
         notifyRef.current({ title: "Date booked", body: `${venue.name} · ${when}. Added to ${cal.split(" · ")[0]}.`, muse: true });
       }, BOOKING_MS);
     },

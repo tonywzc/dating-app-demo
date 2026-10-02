@@ -174,7 +174,7 @@ export function TodayTabIcon({ active, size = 26 }: { active: boolean; size?: nu
   );
 }
 
-export function NearbyTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
+export function NearbyTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
       <path d="M14 24.5s-7.5-6.4-7.5-12.2a7.5 7.5 0 0115 0c0 5.8-7.5 12.2-7.5 12.2z" fill={active ? "currentColor" : "none"} />
@@ -183,7 +183,7 @@ export function NearbyTabIcon({ active, size = 26 }: { active: boolean; size?: n
   );
 }
 
-export function ChatsTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
+export function ChatsTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
       <path
@@ -194,7 +194,7 @@ export function ChatsTabIcon({ active, size = 26 }: { active: boolean; size?: nu
   );
 }
 
-export function YouTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
+export function YouTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="14" cy="9.5" r="4.8" fill={active ? "currentColor" : "none"} />
@@ -300,7 +300,7 @@ export function ChevronDownIcon({ size = 18, className, strokeWidth = 2.4 }: Ico
 }
 
 /** Two interlocking rings: a match, made with intent. */
-export function RingsTabIcon({ active, size = 26 }: { active: boolean; size?: number }) {
+export function RingsTabIcon({ active, size = 28 }: { active: boolean; size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth={active ? 2.6 : 2}>
       <circle cx="10.5" cy="15" r="6.5" />

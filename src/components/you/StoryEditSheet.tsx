@@ -29,13 +29,20 @@ export function StoryEditSheet({ chapter, onSave, onClose }: { chapter: StoryCha
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="no-scrollbar -mx-5 min-h-0 flex-1 overflow-y-auto px-5">
               <h2 className="pt-1 text-[24px] font-bold tracking-[-0.02em]">{draft.title}</h2>
+              <input
+                value={draft.headline}
+                onChange={(e) => setDraft({ ...draft, headline: e.target.value })}
+                maxLength={40}
+                aria-label="Headline"
+                className="mt-4 h-[52px] w-full rounded-[16px] border border-white/15 bg-white/[0.06] px-4 text-[18px] font-semibold text-white outline-none focus:border-white/40"
+              />
               <textarea
                 value={draft.text}
                 onChange={(e) => setDraft({ ...draft, text: e.target.value })}
-                rows={5}
+                rows={4}
                 maxLength={280}
                 aria-label={draft.title}
-                className="mt-4 w-full resize-none rounded-[20px] border border-white/15 bg-white/[0.06] px-4 py-3 text-[17px] leading-[24px] text-white outline-none focus:border-white/40"
+                className="mt-3 w-full resize-none rounded-[20px] border border-white/15 bg-white/[0.06] px-4 py-3 text-[17px] leading-[24px] text-white outline-none focus:border-white/40"
               />
               <div className="mt-3">
                 {draft.photo ? (

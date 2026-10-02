@@ -8,7 +8,7 @@ import type { Person } from "@/lib/app-data";
 import type { Muse } from "@/lib/mock-data";
 import { BackButton } from "@/components/app/PushScreen";
 import { MuseAvatar } from "@/components/muse/MuseAvatar";
-import { ChevronRight, MicIcon, SendIcon } from "@/components/ui/icons";
+import { ChevronRight, MicIcon, SendIcon, SparkleIcon } from "@/components/ui/icons";
 import { MuseBubble } from "./PlanMessages";
 import type { MuseLine } from "./useChats";
 
@@ -26,7 +26,10 @@ export function MuseChat({
   onSend,
   onBack,
   onTalk,
+  offer,
 }: {
+  /** Something Muse is offering to do, with a one-tap button. */
+  offer?: { text: string; label: string; onPress: () => void };
   muse: Muse;
   myName: string;
   summary: Summary;
@@ -153,6 +156,20 @@ export function MuseChat({
         ))}
 
         <div className="py-1 text-center text-[12px] font-medium text-white/40">Today</div>
+        {offer && (
+          <div>
+            <MuseBubble muse={muse}>{offer.text}</MuseBubble>
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.96 }}
+              onClick={offer.onPress}
+              className="ml-9 mt-2 flex h-[44px] items-center gap-2 rounded-full bg-white px-4 text-[15px] font-semibold text-black"
+            >
+              <SparkleIcon size={13} />
+              {offer.label}
+            </motion.button>
+          </div>
+        )}
         {log.map((l) => (
           <Line key={l.id} line={l} muse={muse} />
         ))}

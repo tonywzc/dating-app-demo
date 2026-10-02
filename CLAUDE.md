@@ -8,9 +8,12 @@
 - Easy navigation: one obvious primary action per screen; settings live in sub-pages, not as a wall of toggles.
 - The matchmaker voice is the platform ("we", warm and factual: shared roots, values, plans), not the AI.
   Muse is a helper you can talk to; keep her out of "you two are a fit" claims.
+- Chat composer: the text field first, and every button (send, +, Plan a date) to its right, icon-only.
 - No distances between people; neighborhood only. Distance filters use miles.
-- Profiles read like a matchmaker's brief (background, work & education, life now, looking for, details,
-  "ask them about"): factual and short, leaving the stories for the first conversation. Photos should include the person.
+- Profiles tell a warm, short story from the roots up (Roots, Growing up, Turning points, Now), each chapter with a
+  photo, then Looking for, The details and "Ask them about". Leave the full stories for the first talk. Photos should
+  include the person, and every profile photo opens full screen on tap or long press.
+- Tab bar: icons only, no labels.
 - Twine Plus ($9.99/mo): Plan a date, Host an event, and +3 extra introductions a week (10 vs 7).
   The first try of each says it's a Plus feature, free "because you're in demo mode :)"; the second try shows the upsell.
 

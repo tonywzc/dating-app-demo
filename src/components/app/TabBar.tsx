@@ -51,7 +51,6 @@ export function TabBar({ tab, onSelect, badges }: { tab: Tab; onSelect: (tab: Ta
                   </span>
                 )}
               </span>
-              <span className={`relative mt-[1px] whitespace-nowrap text-[10px] font-semibold ${active ? "text-[#FF8AA2]" : "text-white/70"}`}>{label}</span>
             </button>
           );
         })}

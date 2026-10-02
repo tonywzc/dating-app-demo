@@ -13,14 +13,22 @@ const face = (id: string) => `https://images.unsplash.com/photo-${id}?w=160&h=16
 export type Fact = { label: string; value: string };
 
 /**
- * One part of the matchmaker's brief: short and factual, the way a good matchmaker
- * describes someone. It leaves the real stories for the first conversation.
+ * One chapter of someone's story, told from the roots up: where they're from, growing up,
+ * what changed them, life now. Warm but short, so there's plenty left for the first talk.
  */
 export type StoryChapter = {
   id: string;
   title: string;
+  headline: string;
   text: string;
   photo?: string;
+};
+
+/** Friends you share on Instagram/Facebook, and a vouch if one of them wrote one. */
+export type MutualFriends = {
+  count: number;
+  avatars: string[];
+  vouch?: { from: string; avatar: string; how: string; text: string };
 };
 
 /** How someone can show up on Nearby. */
@@ -52,8 +60,11 @@ export type Person = {
   why: string;
   /** What you share, as chips under the why. */
   overlaps: string[];
-  /** Background, work and education, life now. */
+  /** All their photos, for the cover and the full-screen viewer. */
+  photos: string[];
+  /** Roots, growing up, turning points, now. */
   story: StoryChapter[];
+  mutuals?: MutualFriends;
   /** Stories brought over from Instagram (some with them in it). */
   instagram: Media[];
   /** Things to ask about in person: hooks, not answers. */
@@ -68,14 +79,12 @@ export type Person = {
   nearby?: NearbyInfo;
 };
 
-/**
- * Every photo of Maya is cut from the same portrait (Unsplash), so it is always the
- * same person: the full shot for her profile, and crops and a black-and-white
- * version for the Instagram stories she's in.
- */
+// Portraits for each person are picked to look alike (Unsplash); her Instagram self-portraits
+// are cut from her main photo.
 const MAYA_ID = "1494790108377-be9c29b29330";
 const mayaShot = (params: string) => `https://images.unsplash.com/photo-${MAYA_ID}?w=540&h=960&fit=crop&auto=format&q=70&${params}`;
 const igPhoto = (id: string, src: string, caption: string): Media => ({ id, src, kind: "photo", source: "instagram", caption });
+const friend = (id: string) => face(id);
 
 const MAYA: Person = {
   id: "maya",
@@ -83,26 +92,63 @@ const MAYA: Person = {
   age: 29,
   photo: unsplash(MAYA_ID, 900, 1200),
   avatar: face(MAYA_ID),
+  photos: [
+    unsplash(MAYA_ID, 900, 1200),
+    unsplash("1554151228-14d9def656e4", 900, 1200),
+    mayaShot("crop=faces&sat=-100"),
+    unsplash("1531746020798-e6953c6e8e04", 900, 1200),
+  ],
   neighborhood: "Inner Sunset",
   verified: true,
   essence: "Design lead, potter, early riser.",
   why: "You both grew up in big families and still cook for the people you love. And you both want something serious, at an easy pace.",
   overlaps: ["Big family dinners", "Cooks for friends", "Weekend hikes", "Something serious"],
+  mutuals: {
+    count: 3,
+    avatars: [friend("1500648767791-00dcc994a43e"), friend("1580489944761-15a19d654956"), friend("1506794778202-cad84cf45f1d")],
+    vouch: {
+      from: "Priya",
+      avatar: friend("1580489944761-15a19d654956"),
+      how: "Friends for 8 years",
+      text: "The most loyal person I know. She'll show up at 6 AM with coffee if you need her.",
+    },
+  },
   story: [
-    { id: "background", title: "Background", text: "Grew up in Portland, the oldest of four, in a close family. Still calls her grandmother every Sunday." },
-    { id: "work", title: "Work & education", text: "Leads design at a small studio in SoMa. Went to RISD on a scholarship." },
+    {
+      id: "roots",
+      title: "Roots",
+      headline: "Portland, the oldest of four",
+      text: "Maya grew up in a full, noisy house in Southeast Portland. Her grandmother lived with them and ran the kitchen, and dinner was the one thing nobody missed.",
+      photo: unsplash("1517457373958-b7bdd4587205", 900, 700),
+    },
+    {
+      id: "growing",
+      title: "Growing up",
+      headline: "Rain, trails and a darkroom",
+      text: "Weekends meant hikes in the Columbia Gorge with her dad. At fourteen she found her school's darkroom and never really left.",
+      photo: unsplash("1470071459604-3b5ec3a7fe05", 900, 700),
+    },
+    {
+      id: "turning",
+      title: "Turning points",
+      headline: "Art school, then a leap",
+      text: "A scholarship took her to RISD. After graduating she moved to San Francisco with two suitcases and talked her way into a small design studio.",
+      photo: unsplash("1449034446853-66c86144b0ad", 900, 700),
+    },
     {
       id: "now",
-      title: "Life now",
-      text: "Lives in the Inner Sunset with her foster cat, Miso. Runs before work, spends Saturdays at a ceramics studio, and cooks for friends often.",
+      title: "Now",
+      headline: "Design lead, potter, early riser",
+      text: "She leads design at that same studio, runs Lands End before work and spends Saturdays at the wheel. Ask her about the cat.",
+      photo: unsplash("1554151228-14d9def656e4", 900, 700),
     },
   ],
   instagram: [
     igPhoto("maya-film", mayaShot("crop=faces&sat=-100"), "Self-portrait, on film"),
     igPhoto("maya-run", unsplash("1464278533981-50106e6176b1", 540, 960), "Lands End, 6:40 AM"),
-    igPhoto("maya-close", mayaShot("crop=focalpoint&fp-x=0.5&fp-y=0.32&fp-z=1.7"), "Studio day"),
+    igPhoto("maya-friends", unsplash("1531746020798-e6953c6e8e04", 540, 960), "Birthday girl"),
     igPhoto("maya-wheel", unsplash("1513364776144-60967b0f800f", 540, 960), "Saturdays at the wheel"),
-    igPhoto("maya-dinner", unsplash("1504674900247-0877df9cc836", 540, 960), "Dinner for my sisters"),
+    igPhoto("maya-close", mayaShot("crop=focalpoint&fp-x=0.5&fp-y=0.32&fp-z=1.7"), "Studio day"),
     igPhoto("maya-sierra", unsplash("1506905925346-21bda4d32df4", 540, 960), "Eastern Sierra"),
   ],
   askAbout: ["Her grandmother's kitchen", "The darkroom years", "Miso the cat"],
@@ -140,10 +186,30 @@ const NADIA: Person = {
   essence: "History teacher, Sunday host, midfielder.",
   why: "You both grew up with family at the center of everything, and you both host the people you love. She wants something serious too.",
   overlaps: ["Family first", "Hosts Sunday dinners", "Something serious"],
+  photos: [unsplash(NADIA_ID, 900, 1200), unsplash("1499952127939-9bbf5af6c51c", 900, 1200)],
+  mutuals: { count: 1, avatars: [friend("1438761681033-6461ffad8d80")] },
   story: [
-    { id: "background", title: "Background", text: "Born in Beirut, raised in Sacramento, where her parents run a Lebanese restaurant. First in her family to go to college." },
-    { id: "work", title: "Work & education", text: "Teaches history at a public high school in the city. Studied history at UC Davis." },
-    { id: "now", title: "Life now", text: "Plays in a Tuesday night soccer league and hosts a long lunch for friends most Sundays." },
+    {
+      id: "roots",
+      title: "Roots",
+      headline: "Beirut, then Sacramento",
+      text: "Nadia was born in Beirut and moved to Sacramento at eight, when her parents opened a small Lebanese restaurant. Homework happened at the counter.",
+      photo: unsplash("1414235077428-338989a2e8c0", 900, 700),
+    },
+    {
+      id: "turning",
+      title: "Turning points",
+      headline: "First to college",
+      text: "The first in her family to go to college, she studied history at UC Davis. One class of tenth graders in Oakland made teaching her life.",
+      photo: unsplash("1503676260728-1c00da094a0b", 900, 700),
+    },
+    {
+      id: "now",
+      title: "Now",
+      headline: "Teacher, host, midfielder",
+      text: "She teaches history in the city, plays in a Tuesday league and hosts a long lunch most Sundays.",
+      photo: unsplash("1499952127939-9bbf5af6c51c", 900, 700),
+    },
   ],
   instagram: [
     igPhoto("nadia-bw", `https://images.unsplash.com/photo-${NADIA_ID}?w=540&h=960&fit=crop&auto=format&q=70&crop=faces&sat=-100`, "Golden hour"),
@@ -168,9 +234,21 @@ const NADIA: Person = {
 };
 
 const IRIS_STORY: StoryChapter[] = [
-  { id: "background", title: "Background", text: "Grew up in Monterey, a few blocks from the water. Her mom worked at the aquarium." },
-  { id: "work", title: "Work & education", text: "Marine biologist studying kelp forests at the Academy of Sciences. PhD from the University of Hawaii." },
-  { id: "now", title: "Life now", text: "Surfs Ocean Beach before work, fog or not, and shoots a lot of underwater photos." },
+  {
+    id: "roots",
+    title: "Roots",
+    headline: "Monterey tide pools",
+    text: "Iris grew up a few blocks from the water. Her mom worked at the aquarium, so most afternoons ended in the tide pools.",
+    photo: unsplash("1507525428034-b723cf961d3e", 900, 700),
+  },
+  {
+    id: "turning",
+    title: "Turning points",
+    headline: "Hawaii, and a life underwater",
+    text: "A PhD in Hawaii studying coral, a free-diving habit, and a promise to never live far from the ocean.",
+    photo: unsplash("1501785888041-af3ef285b470", 900, 700),
+  },
+  { id: "now", title: "Now", headline: "Kelp forests and cold surf", text: "She studies kelp forests at the Academy of Sciences and surfs Ocean Beach before work, fog or not." },
 ];
 
 type Seed = Pick<Person, "id" | "name" | "age" | "neighborhood"> & {
@@ -197,7 +275,8 @@ function person(s: Seed): Person {
     essence: s.essence,
     why: `You both love ${s.interests[0].toLowerCase()} and ${s.interests[1].toLowerCase()}, and you're both after something that feels easy.`,
     overlaps: s.interests.slice(0, 3),
-    story: s.story ?? [{ id: "now", title: "Life now", text: s.essence }],
+    photos: [unsplash(s.photoId, 900, 1200)],
+    story: s.story ?? [{ id: "now", title: "Now", headline: s.essence, text: s.nearby?.line ?? "" }],
     instagram: [],
     askAbout: s.interests,
     interests: s.interests,
@@ -650,4 +729,55 @@ export const VENUES: Record<string, Venue[]> = {
 export const PAST_INTROS = [
   { personId: "sofia", day: "Tue", outcome: "Mutual" },
   { personId: "hana", day: "Mon", outcome: "Into you" },
+];
+
+// ---------- Your timeline ----------
+
+export type TimelineKind = "date" | "event" | "blind" | "hosted";
+
+/** Something you went to (or will), sorted into a kind automatically. */
+export type TimelineEntry = {
+  id: string;
+  kind: TimelineKind;
+  title: string;
+  when: string;
+  /** Faces of who was there. */
+  with: string[];
+  photo: string;
+  /** "pending" means we still need to ask whether you went. */
+  status: "upcoming" | "pending" | "went" | "missed";
+  /** 0–5 hearts. */
+  rating?: number;
+};
+
+export const SEED_TIMELINE: TimelineEntry[] = [
+  {
+    id: "tl-sofia",
+    kind: "date",
+    title: "Drinks with Sofia",
+    when: "Thu, Sep 25",
+    with: [SOFIA.avatar],
+    photo: unsplash("1470337458703-46ad1756a187", 600, 400),
+    status: "pending",
+  },
+  {
+    id: "tl-supper",
+    kind: "event",
+    title: "Supper club for 12",
+    when: "Sat, Sep 20",
+    with: [ELENA.avatar, HANA.avatar, PRIYA.avatar],
+    photo: unsplash("1517248135467-4c7edcad34c4", 600, 400),
+    status: "went",
+    rating: 5,
+  },
+  {
+    id: "tl-blind",
+    kind: "blind",
+    title: "Blind dinner for six",
+    when: "Fri, Sep 12",
+    with: [CHLOE.avatar, NEARBY_ONLY[1].avatar],
+    photo: unsplash("1414235077428-338989a2e8c0", 600, 400),
+    status: "went",
+    rating: 3,
+  },
 ];

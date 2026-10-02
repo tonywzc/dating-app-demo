@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import { MY_AREA, NEARBY_EVENTS, NEARBY_PEOPLE, type NearbyEvent, type Person } from "@/lib/app-data";
@@ -18,10 +18,10 @@ import { PersonSheet } from "./PersonSheet";
 
 const FILTERS: { id: MapFilter; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "interested", label: "Into you" },
-  { id: "active", label: "Active now" },
   { id: "twine", label: "Twine events" },
   { id: "blind", label: "Blind dates" },
+  { id: "active", label: "Active now" },
+  { id: "interested", label: "Into you" },
 ];
 
 /** Casual and spontaneous: who's around, what's on, and who'd like to chat. Opt-in. */
@@ -54,8 +54,35 @@ export function NearbyTab({
   const [peek, setPeek] = useState<Person | null>(null);
   const [event, setEvent] = useState<NearbyEvent | null>(null);
   const [tray, setTray] = useState(true);
+  // Where the tray folds to (the Twine events chip), relative to the tray, and a bump when it lands.
+  const [fold, setFold] = useState({ x: 0, y: -600 });
+  const [bump, setBump] = useState(0);
+  // Red dots on chips with something new, until you've tapped them once.
+  const [seen, setSeen] = useState<Set<MapFilter>>(new Set());
+  const trayRef = useRef<HTMLDivElement>(null);
+  const twineChip = useRef<HTMLButtonElement>(null);
+
+  const measureFold = () => {
+    const t = trayRef.current?.getBoundingClientRect();
+    const c = twineChip.current?.getBoundingClientRect();
+    if (!t || !c) return fold;
+    // Bounding rects are in screen pixels; the phone frame may be scaled on desktop.
+    const scale = t.width / (trayRef.current?.offsetWidth || t.width);
+    return { x: (c.left + c.width / 2 - (t.left + t.width / 2)) / scale, y: (c.top + c.height / 2 - (t.top + t.height / 2)) / scale };
+  };
+  const hideTray = () => {
+    setFold(measureFold());
+    setTray(false);
+    setTimeout(() => setBump((b) => b + 1), 520);
+  };
+  const pickFilter = (f: MapFilter) => {
+    setFilter(f);
+    setSeen((s) => new Set(s).add(f));
+    if (f === "twine" || f === "blind") setTray(true);
+  };
 
   const events = [...hosted, ...NEARBY_EVENTS];
+  const trayEvents = filter === "blind" ? events.filter((e) => e.kind === "blind") : filter === "twine" ? events.filter((e) => e.kind === "event" && !e.hosting) : events;
   const into = NEARBY_PEOPLE.filter((p) => p.nearby?.status === "interested" || p.nearby?.status === "chat").length;
   const panTo = (pt: Point) => setFocus({ ...pt, nonce: Date.now() });
   const openEvent = (e: NearbyEvent) => {
@@ -81,42 +108,57 @@ export function NearbyTab({
             <PlusIcon size={22} />
           </RoundButton>
         </div>
-        <div className="no-scrollbar pointer-events-auto relative mt-3 flex gap-2 overflow-x-auto px-5 pb-2">
+        <div className="no-scrollbar pointer-events-auto relative mt-3 flex gap-2 overflow-x-auto px-5 pb-2 pt-[3px]">
           {FILTERS.map((f) => {
             const on = filter === f.id;
             return (
-              <button
+              <motion.button
                 key={f.id}
+                ref={f.id === "twine" ? twineChip : undefined}
                 type="button"
-                onClick={() => setFilter(f.id)}
+                onClick={() => pickFilter(f.id)}
                 aria-pressed={on}
-                className={`flex h-[40px] shrink-0 items-center gap-[6px] rounded-full border px-4 text-[15px] font-medium backdrop-blur-xl transition-colors ${
+                animate={f.id === "twine" && bump ? { scale: [1, 1.18, 1] } : undefined}
+                transition={{ duration: 0.4 }}
+                className={`relative flex h-[40px] shrink-0 items-center gap-[6px] rounded-full border px-4 text-[15px] font-medium backdrop-blur-xl transition-colors ${
                   on ? "border-transparent bg-white text-black" : "border-white/12 bg-[#1C1A24]/75 text-white/85"
                 }`}
               >
                 {f.id === "interested" && <HeartIcon size={12} color={on ? "#FF3F6E" : "#FF8AA2"} />}
                 {f.id === "active" && <span className="h-[8px] w-[8px] rounded-full bg-[#34C759]" />}
-                {f.id === "twine" && <BrandMark width={14} tone={on ? "color" : "color"} />}
+                {f.id === "twine" && <BrandMark width={14} />}
                 {f.label}
                 {f.id === "interested" && <span className={on ? "text-black/50" : "text-white/45"}>{into}</span>}
-              </button>
+                {["active", "twine", "blind"].includes(f.id) && !seen.has(f.id) && (
+                  <span className="absolute -right-[2px] -top-[2px] h-[11px] w-[11px] rounded-full bg-[#FF3B30] ring-2 ring-[#0B0A10]" />
+                )}
+              </motion.button>
             );
           })}
         </div>
       </div>
 
-      {/* Events tray: dismiss it to see the whole map */}
+      {/* Events tray: hiding it folds it into the Twine events chip */}
       <div className="absolute inset-x-0 z-10" style={{ bottom: `calc(${TAB_BAR_SPACE} + 12px)` }}>
-        <AnimatePresence mode="wait" initial={false}>
-          {tray ? (
-            <motion.div key="tray" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}>
+        <AnimatePresence initial={false} custom={fold}>
+          {tray && (
+            <motion.div
+              key="tray"
+              ref={trayRef}
+              custom={fold}
+              variants={FOLD}
+              initial="folded"
+              animate="open"
+              exit="folded"
+              transition={{ type: "spring", stiffness: 260, damping: 30 }}
+            >
               <div className="mb-2 flex justify-end px-5">
-                <RoundButton label="Hide events" onPress={() => setTray(false)} small>
+                <RoundButton label="Hide events" onPress={hideTray} small>
                   <ChevronDownIcon size={18} />
                 </RoundButton>
               </div>
               <div className="no-scrollbar flex snap-x snap-mandatory gap-[10px] overflow-x-auto px-5 pb-1">
-                {events.map((e) => (
+                {trayEvents.map((e) => (
                   <motion.button
                     key={e.id}
                     type="button"
@@ -143,19 +185,6 @@ export function NearbyTab({
                   </motion.button>
                 ))}
               </div>
-            </motion.div>
-          ) : (
-            <motion.div key="pill" className="flex justify-center" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setTray(true)}
-                className="flex h-[46px] items-center gap-2 rounded-full border border-white/10 px-5 text-[16px] font-semibold shadow-[0_12px_30px_rgba(0,0,0,0.45)]"
-                style={{ background: "rgba(28,26,36,0.88)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)" }}
-              >
-                <BrandMark width={16} />
-                Events &middot; {events.length}
-              </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -209,6 +238,17 @@ function RoundButton({ label, onPress, brand = false, small = false, children }:
     </motion.button>
   );
 }
+
+const FOLD = {
+  open: { x: 0, y: 0, scale: 1, opacity: 1 },
+  folded: (to: { x: number; y: number }) => ({
+    x: to.x,
+    y: to.y,
+    scale: 0.06,
+    opacity: 0,
+    transition: { duration: 0.55, ease: [0.5, 0, 0.75, 0.6] as const, opacity: { duration: 0.55, ease: "easeIn" as const } },
+  }),
+};
 
 // ---------- Consent ----------
 

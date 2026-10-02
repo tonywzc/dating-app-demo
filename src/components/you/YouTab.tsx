@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ageFrom } from "@/lib/format";
 import type { Summary } from "@/lib/muse-script";
-import type { Person, StoryChapter } from "@/lib/app-data";
+import type { MutualFriends, Person, StoryChapter, TimelineEntry } from "@/lib/app-data";
 import { ARCHIVE_STORIES, CAMERA_ROLL_MEDIA, PROFILE_PHOTO, type Muse } from "@/lib/mock-data";
 import { PushScreen, BackButton } from "@/components/app/PushScreen";
 import { TAB_BAR_SPACE } from "@/components/app/TabBar";
@@ -18,9 +18,27 @@ import { TopFade } from "@/components/ui/TopFade";
 import { Photo } from "@/components/ui/Photo";
 import { ChevronRight, CloseIcon, EyeIcon, GearIcon, ImageIcon, MicIcon, PlusIcon, ShieldCheckIcon } from "@/components/ui/icons";
 import { StoryEditSheet } from "./StoryEditSheet";
+import { Timeline } from "./Timeline";
+import { Toggle } from "@/components/ui/Toggle";
 
 /** Everything on your public profile that you can edit. */
-export type Me = { fields: Field[]; interests: string[]; moments: Moment[]; story: StoryChapter[] };
+export type Me = { fields: Field[]; interests: string[]; moments: Moment[]; story: StoryChapter[]; showMutuals: boolean };
+
+/** Friends you share with people you meet, and the vouch one of them wrote for you. */
+export const MY_MUTUALS: MutualFriends = {
+  count: 5,
+  avatars: [
+    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=70",
+    "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=160&h=160&fit=crop&crop=faces&auto=format&q=70",
+    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&crop=faces&auto=format&q=70",
+  ],
+  vouch: {
+    from: "Sam",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&crop=faces&auto=format&q=70",
+    how: "College roommate",
+    text: "Best cook I know. He'll drive across the city to help you move, then make you dinner.",
+  },
+};
 
 const field = (fields: Field[], id: string) => fields.find((f) => f.id === id)?.value ?? "";
 
@@ -33,6 +51,8 @@ export function selfAsPerson(me: Me, summary: Summary): Person {
     name: field(me.fields, "name"),
     age: birthday ? ageFrom(birthday) : 0,
     photo: PROFILE_PHOTO,
+    photos: [PROFILE_PHOTO, ...me.moments.filter((m) => m.media.kind === "photo").map((m) => m.media.src)],
+    mutuals: MY_MUTUALS,
     avatar: PROFILE_PHOTO,
     neighborhood: field(me.fields, "location").split(",")[0],
     verified: true,
@@ -59,7 +79,11 @@ export function YouTab({
   summary,
   onOpenSettings,
   onTalkToMuse,
+  timeline,
+  onCheckIn,
 }: {
+  timeline: TimelineEntry[];
+  onCheckIn: (e: TimelineEntry) => void;
   me: Me;
   onChange: (me: Me) => void;
   muse: Muse;
@@ -203,7 +227,8 @@ export function YouTab({
                   </span>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[16px] font-semibold">{c.title}</span>
+                  <span className="block text-[13px] font-semibold uppercase tracking-[0.06em] text-[#FF8AA2]">{c.title}</span>
+                  <span className="block truncate text-[16px] font-semibold">{c.headline}</span>
                   <span className="line-clamp-2 block text-[14px] leading-[19px] text-white/55">{c.text}</span>
                 </span>
                 <ChevronRight className="shrink-0 text-white/30" />
@@ -211,6 +236,33 @@ export function YouTab({
             ))}
           </div>
         </section>
+
+        {/* Mutual friends */}
+        <section className="mt-6">
+          <h2 className="px-3 pb-2 text-[13px] font-medium uppercase tracking-[0.06em] text-white/50">Mutual friends</h2>
+          <div className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-white/[0.04]">
+            <div className="flex min-h-[60px] items-center gap-3 px-4">
+              <span className="flex -space-x-3">
+                {MY_MUTUALS.avatars.map((a) => (
+                  <Photo key={a} src={a} className="h-[32px] w-[32px] rounded-full ring-[3px] ring-[#141219]" />
+                ))}
+              </span>
+              <span className="min-w-0 flex-1 text-[16px]">Show on my profile</span>
+              <Toggle on={me.showMutuals} label="Show mutual friends" onChange={(v) => onChange({ ...me, showMutuals: v })} />
+            </div>
+            {me.showMutuals && MY_MUTUALS.vouch && (
+              <div className="flex items-start gap-3 border-t border-white/[0.07] px-4 py-3">
+                <Photo src={MY_MUTUALS.vouch.avatar} className="h-[32px] w-[32px] shrink-0 rounded-full" />
+                <p className="text-[15px] leading-[21px] text-white/75">
+                  &ldquo;{MY_MUTUALS.vouch.text}&rdquo;
+                  <span className="mt-1 block text-[13px] font-semibold text-white/50">{MY_MUTUALS.vouch.from} vouched</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <Timeline entries={timeline} onCheckIn={onCheckIn} />
 
         {/* In short */}
         <section className="mt-6">
@@ -308,6 +360,7 @@ export function YouTab({
             <ProfileBook
               person={self}
               variant="self"
+              showMutuals={me.showMutuals}
               bottomSpace="48px"
               topLeft={<BackButton onPress={() => setPreview(false)} />}
               label={<span className="rounded-full bg-black/40 px-4 py-[8px] text-[15px] font-semibold backdrop-blur-md">Preview</span>}

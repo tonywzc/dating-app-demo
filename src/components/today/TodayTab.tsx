@@ -131,7 +131,7 @@ export function TodayTab({
                 }}
               >
                 <ChatBubbleIcon size={18} />
-                Start a conversation with {person.name}
+                Start the first talk
               </motion.button>
             </div>
           </motion.div>

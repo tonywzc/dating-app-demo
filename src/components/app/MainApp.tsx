@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { MY_AREA, PEOPLE, TODAY_PICKS, type NearbyEvent, type Person } from "@/lib/app-data";
+import { MY_AREA, PEOPLE, SEED_TIMELINE, TODAY_PICKS, type NearbyEvent, type Person, type TimelineEntry } from "@/lib/app-data";
 import { DEFAULT_MUSE, PROFILE_PREFILL, TOP_STORIES, type Account } from "@/lib/mock-data";
 import type { Answers, Summary } from "@/lib/muse-script";
 import { ChatThread } from "@/components/chats/ChatThread";
@@ -20,6 +20,7 @@ import { DEFAULT_SETTINGS, SettingsScreen, type Settings } from "@/components/yo
 import { HostSheet, type HostPlan } from "@/components/nearby/HostSheet";
 import { YouTab, type Me } from "@/components/you/YouTab";
 import { BannerHost } from "./Banner";
+import { CheckInDialog } from "./CheckInDialog";
 import { PlusSheet, type PlusFeature } from "./PlusSheet";
 import { BackButton, PushScreen } from "./PushScreen";
 import { TabBar, type Tab } from "./TabBar";
@@ -47,10 +48,35 @@ function initialMe(profile: ProfileBasics, answers: Answers, moments: Moment[]):
     ],
     interests: PROFILE_PREFILL.interests,
     moments,
+    showMutuals: true,
     story: [
-      { id: "background", title: "Background", text: "Grew up in a big, loud family. Sunday dinners at grandma's were the center of everything.", photo: TOP_STORIES[3].src },
-      { id: "work", title: "Work & education", text: "Works in product at Meta. Studied at UC Berkeley." },
-      { id: "now", title: "Life now", text: `Lives in ${profile.location.split(",")[0]}. Hikes in Marin on weekends and makes fresh pasta for friends.` },
+      {
+        id: "roots",
+        title: "Roots",
+        headline: "Sunday dinners at grandma's",
+        text: "Grew up in a big, loud family. Everyone crammed around one table, and grandma made sure every plate was full before she sat down.",
+        photo: TOP_STORIES[3].src,
+      },
+      {
+        id: "growing",
+        title: "Growing up",
+        headline: "The calm one in the chaos",
+        text: "The kid who remembered everyone's birthday, and the one friends called when things got loud.",
+      },
+      {
+        id: "turning",
+        title: "Turning points",
+        headline: "Berkeley, then product",
+        text: "Studied at UC Berkeley, found product work, and learned to cook properly in a tiny first apartment.",
+        photo: TOP_STORIES[1].src,
+      },
+      {
+        id: "now",
+        title: "Now",
+        headline: "Trails, then the kitchen",
+        text: `Lives in ${profile.location.split(",")[0]}. Hikes in Marin on weekends and makes fresh pasta for friends, round four and counting.`,
+        photo: TOP_STORIES[0].src,
+      },
     ],
   };
 }
@@ -92,6 +118,26 @@ export function MainApp({
   const [answers, setAnswers] = useState(initialAnswers);
   const [me, setMe] = useState<Me>(() => initialMe(profile, initialAnswers, moments));
   const [talking, setTalking] = useState(false);
+  // Muse's first unread message offers to sort the inbox, to bring people into her chat.
+  const [chatMode, setChatMode] = useState<"list" | "sorting" | "sorted">("list");
+  const [museUnread, setMuseUnread] = useState(true);
+  const [museOffer, setMuseOffer] = useState(true);
+  const sortInbox = () => {
+    setMuseOffer(false);
+    setMuseUnread(false);
+    setChatMode("sorting");
+    setTimeout(() => setChatMode("sorted"), 1100);
+  };
+  const [timeline, setTimeline] = useState<TimelineEntry[]>(SEED_TIMELINE);
+  const [checkIn, setCheckIn] = useState<TimelineEntry | null>(null);
+  const addToTimeline = (entry: Omit<TimelineEntry, "id" | "status">) =>
+    setTimeline((list) => [{ ...entry, id: `tl-${Date.now()}`, status: "upcoming" }, ...list]);
+
+  // Coming back to the app: ask about the last date we haven't heard about.
+  useEffect(() => {
+    const t = setTimeout(() => setCheckIn(SEED_TIMELINE.find((e) => e.status === "pending") ?? null), 1600);
+    return () => clearTimeout(t);
+  }, []);
 
   // Twine Plus. Plan a date and Host an event are free once.
   const [plus, setPlus] = useState(false);
@@ -102,7 +148,15 @@ export function MainApp({
   const notify = useCallback((b: Omit<Banner, "id">) => setBanner({ ...b, id: String(Date.now()) }), []);
   const dismissBanner = useCallback(() => setBanner(null), []);
   const onCalendarChosen = useCallback((calendar: string) => setSettings((s) => ({ ...s, calendar })), []);
-  const chats = useChats({ myName, calendar: settings.calendar, onCalendarChosen, notify });
+  const onBooked = useCallback(
+    ({ personId, venue, when }: { personId: string; venue: { name: string; photo: string }; when: string }) =>
+      setTimeline((list) => [
+        { id: `tl-${Date.now()}`, kind: "date", title: `${venue.name} with ${PEOPLE[personId].name}`, when, with: [PEOPLE[personId].avatar], photo: venue.photo, status: "upcoming" },
+        ...list,
+      ]),
+    [],
+  );
+  const chats = useChats({ myName, calendar: settings.calendar, onCalendarChosen, notify, onBooked });
 
   const push = (screen: Pushed) => {
     if (screen.kind === "thread") chats.setOpen(screen.tid);
@@ -161,6 +215,7 @@ export function MainApp({
 
   const rsvp = (e: NearbyEvent) => {
     setGoing((g) => new Set(g).add(e.id));
+    addToTimeline({ kind: e.kind === "blind" ? "blind" : "event", title: e.title, when: e.when, with: e.faces ?? [], photo: e.photo });
     notify({ title: e.kind === "blind" ? "Seat saved" : "You're going", body: `${e.title} · ${e.when}`, muse: true });
   };
 
@@ -181,6 +236,7 @@ export function MainApp({
       hosting: true,
     };
     setHosted((list) => [event, ...list]);
+    addToTimeline({ kind: "hosted", title: plan.kind.label, when: plan.when, with: [], photo: plan.kind.photo });
     notify({ title: "You're hosting", body: `${plan.kind.label} · ${plan.when}. Invites are going out.`, muse: true });
   };
 
@@ -231,7 +287,21 @@ export function MainApp({
           />
         )}
         {tab === "chats" && (
-          <ChatsTab threads={chats.threads} muse={muse} museLast={museLast} onOpen={(tid) => push({ kind: "thread", tid })} onOpenMuse={() => push({ kind: "muse" })} />
+          <ChatsTab
+            threads={chats.threads}
+            muse={muse}
+            museLast={museLast}
+            onOpen={(tid) => push({ kind: "thread", tid })}
+            onOpenMuse={() => {
+              setMuseUnread(false);
+              push({ kind: "muse" });
+            }}
+            mode={chatMode}
+            museUnread={museUnread}
+            museOffer={museOffer}
+            onSort={sortInbox}
+            onUnsort={() => setChatMode("list")}
+          />
         )}
         {tab === "you" && (
           <YouTab
@@ -240,12 +310,14 @@ export function MainApp({
             muse={muse}
             summary={summary}
             onOpenSettings={() => push({ kind: "settings" })}
+            timeline={timeline}
+            onCheckIn={setCheckIn}
             onTalkToMuse={() => setTalking(true)}
           />
         )}
       </div>
 
-      <TabBar tab={tab} onSelect={goTab} badges={{ chats: unread, today: decisions[pick.id] ? undefined : "dot" }} />
+      <TabBar tab={tab} onSelect={goTab} badges={{ chats: unread + (museUnread ? 1 : 0), today: decisions[pick.id] ? undefined : "dot" }} />
 
       {/* Pushed screens */}
       <AnimatePresence>
@@ -264,6 +336,18 @@ export function MainApp({
                 onSend={chats.sendToMuse}
                 onBack={pop}
                 onTalk={() => setTalking(true)}
+                offer={
+                  museOffer
+                    ? {
+                        text: `Your inbox is getting busy: ${chats.threads.length} chats. Want me to sort it?`,
+                        label: "Sort inbox",
+                        onPress: () => {
+                          goTab("chats");
+                          sortInbox();
+                        },
+                      }
+                    : undefined
+                }
               />
             )}
             {screen.kind === "settings" && (
@@ -313,6 +397,14 @@ export function MainApp({
         )}
       </AnimatePresence>
 
+      <CheckInDialog
+        entry={checkIn}
+        onAnswer={(went, rating) => {
+          const id = checkIn?.id;
+          setCheckIn(null);
+          setTimeline((list) => list.map((e) => (e.id === id ? { ...e, status: went ? "went" : "missed", rating } : e)));
+        }}
+      />
       <HostSheet open={hosting} onCreate={host} onClose={() => setHosting(false)} />
       <PlusSheet
         feature={upsell?.feature ?? null}

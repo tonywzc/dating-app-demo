@@ -8,7 +8,9 @@ import type { Media } from "@/lib/mock-data";
 import { InstagramGlyph } from "@/components/ui/InstagramGlyph";
 import { MediaTile } from "@/components/photos/MediaTile";
 import { Photo } from "@/components/ui/Photo";
-import { ShieldCheckIcon } from "@/components/ui/icons";
+import { ImageIcon, ShieldCheckIcon } from "@/components/ui/icons";
+import { PhotoViewer, type ViewerState } from "@/components/ui/PhotoViewer";
+import { usePress } from "@/lib/usePress";
 
 /** `body` gets the chapter's number, which depends on which chapters this person has. */
 type Chapter = { id: string; title: string; body: (n: number) => ReactNode };
@@ -27,7 +29,10 @@ export function ProfileBook({
   topRight,
   topLeft,
   bottomSpace,
+  showMutuals = true,
 }: {
+  /** Show mutual friends and vouches (the person's own privacy setting). */
+  showMutuals?: boolean;
   person: Person;
   /** `self` is your own profile, as others see it (no "why we introduced you"). */
   variant: "today" | "view" | "self";
@@ -37,7 +42,11 @@ export function ProfileBook({
   /** CSS length kept clear at the bottom of each page (for action bars and the tab bar). */
   bottomSpace: string;
 }) {
-  const chapters = useMemo(() => buildChapters(person, variant), [person, variant]);
+  const [viewer, setViewer] = useState<ViewerState>(null);
+  const chapters = useMemo(
+    () => buildChapters(person, variant, showMutuals, (photos, index) => setViewer({ photos, index })),
+    [person, variant, showMutuals],
+  );
   const [[index, dir], setPage] = useState<[number, number]>([0, 0]);
   const chapter = chapters[Math.min(index, chapters.length - 1)];
 
@@ -107,6 +116,7 @@ export function ProfileBook({
           ))}
         </div>
       </div>
+      <PhotoViewer state={viewer} onClose={() => setViewer(null)} />
     </div>
   );
 }
@@ -119,23 +129,43 @@ const PAGE = {
 
 // ---------- Chapters ----------
 
-function buildChapters(p: Person, variant: "today" | "view" | "self"): Chapter[] {
+type View = (photos: string[], index: number) => void;
+
+function buildChapters(p: Person, variant: "today" | "view" | "self", showMutuals: boolean, view: View): Chapter[] {
   const list: (Chapter | false)[] = [
-    { id: "cover", title: variant === "self" ? "Cover" : "Why you two", body: () => <Cover p={p} variant={variant} /> },
-    ...p.story.map((c) => ({ id: c.id, title: c.title, body: (n: number) => <Story chapter={c} n={n} instagram={c.id === "now" ? p.instagram : []} /> })),
+    { id: "cover", title: variant === "self" ? "Cover" : "Why you two", body: () => <Cover p={p} variant={variant} showMutuals={showMutuals} view={view} /> },
+    ...p.story.map((c) => ({
+      id: c.id,
+      title: c.title,
+      body: (n: number) => <Story chapter={c} n={n} instagram={c.id === "now" ? p.instagram : []} view={view} />,
+    })),
     Boolean(p.lookingFor) && { id: "looking", title: "Looking for", body: (n: number) => <Looking p={p} n={n} /> },
     { id: "details", title: "The details", body: (n: number) => <Details p={p} n={n} self={variant === "self"} /> },
   ];
   return list.filter(Boolean) as Chapter[];
 }
 
-function ChapterHead({ n, title }: { n: number; title: string }) {
+/** A photo you can tap, or press and hold, to see full screen. */
+function Viewable({ photos, index, view, className, children }: { photos: string[]; index: number; view: View; className?: string; children: ReactNode }) {
+  const open = () => view(photos, index);
+  const press = usePress(open, open);
+  return (
+    <div role="button" tabIndex={0} aria-label="View photo" className={`cursor-zoom-in select-none [-webkit-touch-callout:none] ${className ?? ""}`} onKeyDown={(e) => e.key === "Enter" && open()} {...press}>
+      {children}
+    </div>
+  );
+}
+
+function ChapterHead({ n, title, headline }: { n: number; title: string; headline?: string }) {
   return (
     <div className="px-6 pt-[calc(var(--safe-top)+84px)]">
-      <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#FF8AA2]">{String(n).padStart(2, "0")}</div>
-      <h2 className="mt-1 text-[34px] leading-[38px] tracking-[-0.01em]" style={SERIF}>
-        {title}
-      </h2>
+      <div className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[#FF8AA2]">{title}</div>
+      {headline && (
+        <h2 className="mt-2 text-[32px] leading-[37px] tracking-[-0.01em]" style={SERIF}>
+          {headline}
+        </h2>
+      )}
+      <span className="sr-only">Chapter {n}</span>
     </div>
   );
 }
@@ -151,12 +181,17 @@ function Chip({ children, tint = false }: { children: ReactNode; tint?: boolean 
   );
 }
 
-function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }) {
+function Cover({ p, variant, showMutuals, view }: { p: Person; variant: "today" | "view" | "self"; showMutuals: boolean; view: View }) {
   return (
     <div>
-      <div className="relative h-[470px] w-full">
+      <Viewable photos={p.photos} index={0} view={view} className="relative block h-[470px] w-full">
         <Photo src={p.photo} alt={p.name} initial={p.name[0]} className="absolute inset-0 h-full w-full" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0A0810]" />
+        {p.photos.length > 1 && (
+          <span className="absolute right-4 top-[calc(var(--safe-top)+84px)] flex h-[32px] items-center gap-[6px] rounded-full bg-black/45 px-3 text-[14px] font-semibold backdrop-blur-md">
+            <ImageIcon size={15} /> {p.photos.length}
+          </span>
+        )}
         <div className="absolute inset-x-6 bottom-4">
           <div className="flex items-center gap-2">
             <h1 className="text-[44px] font-semibold leading-[46px] tracking-[-0.02em]" style={SERIF}>
@@ -166,10 +201,23 @@ function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }
             {p.verified && <ShieldCheckIcon size={20} className="mt-2" />}
           </div>
           <div className="mt-1 text-[15px] text-white/75">{p.neighborhood}</div>
+          {showMutuals && p.mutuals && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="flex -space-x-2">
+                {p.mutuals.avatars.slice(0, 3).map((a) => (
+                  <Photo key={a} src={a} className="h-[26px] w-[26px] rounded-full ring-2 ring-black/60" />
+                ))}
+              </span>
+              <span className="text-[14px] font-semibold">
+                {p.mutuals.count} mutual {p.mutuals.count === 1 ? "friend" : "friends"}
+                {p.mutuals.vouch && <span className="font-normal text-white/75"> &middot; {p.mutuals.vouch.from} vouched</span>}
+              </span>
+            </div>
+          )}
         </div>
-      </div>
+      </Viewable>
 
-      <div className="px-5">
+      <div className="space-y-3 px-5">
         <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-5">
           <div className="text-[12px] font-semibold uppercase tracking-[0.08em] text-white/50">{variant === "self" ? "In short" : "Why we introduced you"}</div>
           <p className="mt-3 text-[18px] leading-[26px] text-white/92" style={SERIF}>
@@ -185,8 +233,9 @@ function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }
             </div>
           )}
         </div>
-        <div className="mt-5 flex items-center justify-center gap-2 text-[14px] font-medium text-white/45">
-          More about {p.name}
+        {showMutuals && p.mutuals && <Mutuals m={p.mutuals} />}
+        <div className="flex items-center justify-center gap-2 pt-2 text-[14px] font-medium text-white/45">
+          {p.name}&apos;s story
           <motion.span animate={{ x: [0, 5, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}>
             &rarr;
           </motion.span>
@@ -196,15 +245,50 @@ function Cover({ p, variant }: { p: Person; variant: "today" | "view" | "self" }
   );
 }
 
-function Story({ chapter, n, instagram }: { chapter: StoryChapter; n: number; instagram: Media[] }) {
+/** "3 mutual friends, and Priya vouched for her." */
+function Mutuals({ m }: { m: NonNullable<Person["mutuals"]> }) {
+  return (
+    <div className="rounded-[26px] border border-white/[0.08] bg-white/[0.05] p-5">
+      <div className="flex items-center gap-3">
+        <div className="flex -space-x-3">
+          {m.avatars.map((a) => (
+            <Photo key={a} src={a} className="h-[36px] w-[36px] rounded-full ring-[3px] ring-[#16131D]" />
+          ))}
+        </div>
+        <span className="text-[16px] font-semibold">
+          {m.count} mutual {m.count === 1 ? "friend" : "friends"}
+        </span>
+      </div>
+      {m.vouch && (
+        <div className="mt-4 border-t border-white/[0.08] pt-4">
+          <p className="text-[17px] leading-[25px] text-white/90" style={SERIF}>
+            &ldquo;{m.vouch.text}&rdquo;
+          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <Photo src={m.vouch.avatar} className="h-[28px] w-[28px] rounded-full" />
+            <span className="text-[14px] font-semibold">{m.vouch.from} vouched</span>
+            <span className="text-[13px] text-white/45">&middot; {m.vouch.how}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Story({ chapter, n, instagram, view }: { chapter: StoryChapter; n: number; instagram: Media[]; view: View }) {
+  const igPhotos = instagram.map((m) => m.src);
   return (
     <div>
-      <ChapterHead n={n} title={chapter.title} />
-      <p className="mt-5 px-6 text-[20px] leading-[30px] text-white/90">{chapter.text}</p>
+      <ChapterHead n={n} title={chapter.title} headline={chapter.headline} />
       {chapter.photo && (
-        <div className="mx-5 mt-6 overflow-hidden rounded-[24px]">
+        <Viewable photos={[chapter.photo, ...igPhotos]} index={0} view={view} className="mx-5 mt-6 block overflow-hidden rounded-[24px]">
           <Photo src={chapter.photo} className="aspect-[4/3] w-full" />
-        </div>
+        </Viewable>
+      )}
+      {chapter.text && (
+        <p className="mt-5 px-6 text-[19px] leading-[29px] text-white/88" style={SERIF}>
+          {chapter.text}
+        </p>
       )}
       {instagram.length > 0 && (
         <>
@@ -212,10 +296,10 @@ function Story({ chapter, n, instagram }: { chapter: StoryChapter; n: number; in
             <InstagramGlyph size={15} /> From Instagram
           </div>
           <div className="mt-3 grid grid-cols-3 gap-[6px] px-5">
-            {instagram.map((m) => (
-              <div key={m.id} className="relative aspect-[9/16] overflow-hidden rounded-[14px]">
+            {instagram.map((m, i) => (
+              <Viewable key={m.id} photos={igPhotos} index={i} view={view} className="relative block aspect-[9/16] overflow-hidden rounded-[14px]">
                 <MediaTile media={m} className="h-full w-full" showSource={false} showCaption />
-              </div>
+              </Viewable>
             ))}
           </div>
         </>
@@ -227,10 +311,7 @@ function Story({ chapter, n, instagram }: { chapter: StoryChapter; n: number; in
 function Looking({ p, n }: { p: Person; n: number }) {
   return (
     <div>
-      <ChapterHead n={n} title="Looking for" />
-      <p className="mt-5 px-6 text-[26px] leading-[33px]" style={SERIF}>
-        {p.lookingFor}
-      </p>
+      <ChapterHead n={n} title="Looking for" headline={p.lookingFor} />
       {p.hopingToMeet.length > 0 && (
         <div className="mt-6 flex flex-wrap gap-2 px-6">
           {p.hopingToMeet.map((h) => (

@@ -2,13 +2,12 @@
 
 import { motion } from "motion/react";
 import type { Person } from "@/lib/app-data";
-import { TextButton } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 
-const REASONS = ["Not my type", "Different goals", "Too far", "No spark", "Something else"];
+const REASONS = ["Not my type", "Different goals", "Too far", "No spark", "Bad timing", "Something else"];
 
 /** Why pass? One tap on a reason passes. Private: they never know. */
-export function PassSheet({ open, person, onPass, onClose }: { open: boolean; person: Person; onPass: (reason?: string) => void; onClose: () => void }) {
+export function PassSheet({ open, person, onPass, onClose }: { open: boolean; person: Person; onPass: (reason: string) => void; onClose: () => void }) {
   return (
     <Sheet open={open} onClose={onClose}>
       <h2 className="pt-1 text-center text-[22px] font-bold tracking-[-0.02em]">Why not {person.name}?</h2>
@@ -20,17 +19,13 @@ export function PassSheet({ open, person, onPass, onClose }: { open: boolean; pe
             type="button"
             whileTap={{ scale: 0.96 }}
             onClick={() => onPass(r)}
-            className="h-[52px] rounded-full bg-white/[0.08] text-[16px] font-medium active:bg-white/15 last:col-span-2"
+            className="h-[52px] rounded-full bg-white/[0.08] text-[16px] font-medium active:bg-white/15"
           >
             {r}
           </motion.button>
         ))}
       </div>
-      <div className="mt-2 flex justify-center">
-        <TextButton onClick={() => onPass()} className="text-white/60">
-          Just pass
-        </TextButton>
-      </div>
+      <div className="h-3" />
     </Sheet>
   );
 }
