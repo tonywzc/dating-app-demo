@@ -50,8 +50,6 @@ export function TodayTab({
   onOpenChat,
   onReadAgain,
   onSeeAnother,
-  onImmersive,
-  immersive,
   distance,
   onDistance,
 }: {
@@ -68,16 +66,13 @@ export function TodayTab({
   onOpenChat: () => void;
   onReadAgain: () => void;
   onSeeAnother: () => void;
-  /** Reading the chapters: the app hides the tab bar. */
-  onImmersive: (immersive: boolean) => void;
-  /** The tab bar is hidden, so the buttons can sit lower. */
-  immersive: boolean;
 }) {
   const [sheet, setSheet] = useState<"pass" | "distance" | null>(null);
-  // Scrolling shrinks the buttons to icons; turning past the cover hides the tab bar.
-  const [compact, setCompact] = useState(false);
-  const onChapterIndex = useCallback((i: number) => onImmersive(i > 0), [onImmersive]);
-  const bottom = immersive ? "calc(max(var(--safe-bottom), 12px) + 8px)" : `calc(${TAB_BAR_SPACE} + 14px)`;
+  // Once you scroll, the buttons shrink to icons and stay that way for this person (no back-and-forth).
+  const [compactFor, setCompactFor] = useState<string | null>(null);
+  const compact = compactFor === person.id;
+  const onScrolled = useCallback((scrolled: boolean) => scrolled && setCompactFor(person.id), [person.id]);
+  const bottom = `calc(${TAB_BAR_SPACE} + 14px)`;
   const filterButton = (
     <motion.button
       type="button"
@@ -117,8 +112,7 @@ export function TodayTab({
               bottomSpace={`calc(${TAB_BAR_SPACE} + 110px)`}
               label={<span className="rounded-full bg-black/40 px-4 py-[10px] text-[15px] font-semibold backdrop-blur-md">{new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
               topRight={filterButton}
-              onScrolled={setCompact}
-              onChapterIndex={onChapterIndex}
+              onScrolled={onScrolled}
             />
 
             <motion.div
@@ -126,7 +120,7 @@ export function TodayTab({
               animate={{ opacity: compact ? 0 : 1 }}
             />
             <div
-              className={`absolute inset-x-0 z-20 flex items-center gap-3 px-5 transition-[bottom] duration-300 ${compact ? "justify-end" : ""}`}
+              className={`absolute inset-x-0 z-20 flex items-center gap-3 px-5 ${compact ? "justify-end" : ""}`}
               style={{ bottom }}
             >
               <motion.button

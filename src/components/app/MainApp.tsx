@@ -118,7 +118,6 @@ export function MainApp({
   const [answers, setAnswers] = useState(initialAnswers);
   const [me, setMe] = useState<Me>(() => initialMe(profile, initialAnswers, moments));
   const [talking, setTalking] = useState(false);
-  const [reading, setReading] = useState(false);
   // Muse's first unread message offers to sort the inbox, to bring people into her chat.
   const [chatMode, setChatMode] = useState<"list" | "sorting" | "sorted">("list");
   const [museUnread, setMuseUnread] = useState(true);
@@ -172,7 +171,6 @@ export function MainApp({
     });
   };
   const goTab = (t: Tab) => {
-    setReading(false);
     setStack([]);
     chats.setOpen(null);
     setTab(t);
@@ -268,8 +266,6 @@ export function MainApp({
             onOpenChat={() => openThread(pick.id)}
             onReadAgain={() => push({ kind: "person", personId: pick.id })}
             onSeeAnother={seeAnother}
-            onImmersive={setReading}
-            immersive={reading && !decisions[pick.id]}
             distance={settings.distance}
             onDistance={(distance) => {
               setSettings((st) => ({ ...st, distance }));
@@ -321,7 +317,7 @@ export function MainApp({
         )}
       </div>
 
-      <TabBar tab={tab} onSelect={goTab} hidden={tab === "today" && reading && !decisions[pick.id]} badges={{ chats: unread + (museUnread ? 1 : 0), today: decisions[pick.id] ? undefined : "dot" }} />
+      <TabBar tab={tab} onSelect={goTab} badges={{ chats: unread + (museUnread ? 1 : 0), today: decisions[pick.id] ? undefined : "dot" }} />
 
       {/* Pushed screens */}
       <AnimatePresence>

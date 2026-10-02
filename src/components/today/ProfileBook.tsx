@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BRAND } from "@/lib/brand";
 import type { Person, StoryChapter } from "@/lib/app-data";
@@ -31,12 +31,9 @@ export function ProfileBook({
   bottomSpace,
   showMutuals = true,
   onScrolled,
-  onChapterIndex,
 }: {
   /** Whether the current page is scrolled past its top (to shrink overlays). */
   onScrolled?: (scrolled: boolean) => void;
-  /** Which chapter is showing (0 is the cover). */
-  onChapterIndex?: (index: number) => void;
   /** Show mutual friends and vouches (the person's own privacy setting). */
   showMutuals?: boolean;
   person: Person;
@@ -56,10 +53,22 @@ export function ProfileBook({
   const [[index, dir], setPage] = useState<[number, number]>([0, 0]);
   const chapter = chapters[Math.min(index, chapters.length - 1)];
 
-  useEffect(() => {
-    onChapterIndex?.(index);
-    onScrolled?.(false);
-  }, [index, onChapterIndex, onScrolled]);
+  // Tap the left or right edge of a page to turn it (like Stories). Edge taps win over photo taps.
+  const tapStart = useRef<{ x: number; y: number; side: -1 | 1 } | null>(null);
+  const edgeDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    tapStart.current = x <= 0.25 ? { x: e.clientX, y: e.clientY, side: -1 } : x >= 0.75 ? { x: e.clientX, y: e.clientY, side: 1 } : null;
+    // Photos under an edge never start their own tap or long press. (The page's swipe still works.)
+    if (tapStart.current) e.stopPropagation();
+  };
+  const edgeUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = tapStart.current;
+    tapStart.current = null;
+    if (!start || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8) return;
+    e.stopPropagation();
+    go(index + start.side);
+  };
 
   const go = (next: number) => {
     if (next < 0 || next >= chapters.length || next === index) return;
@@ -99,6 +108,8 @@ export function ProfileBook({
           }}
           className="absolute inset-0 origin-left bg-[#0A0810]"
           style={{ touchAction: "pan-y", boxShadow: "-24px 0 50px rgba(0,0,0,0.55)" }}
+          onPointerDownCapture={edgeDown}
+          onPointerUpCapture={edgeUp}
         >
           <div
             className="no-scrollbar h-full overflow-y-auto"
